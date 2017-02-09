@@ -1,0 +1,11 @@
+
+libxice {
+global:
+	xice_*;
+};
+
+HIDDEN {
+local:
+	*;
+};
+

@@ -1,0 +1,179 @@
+<!-- ##### SECTION Title ##### -->
+XiceAddress
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### SECTION Image ##### -->
+
+
+<!-- ##### STRUCT XiceAddress ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO XICE_ADDRESS_STRING_LEN ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION xice_address_init ##### -->
+<para>
+
+</para>
+
+@addr: 
+
+
+<!-- ##### FUNCTION xice_address_new ##### -->
+<para>
+
+</para>
+
+@void: 
+@Returns: 
+
+
+<!-- ##### FUNCTION xice_address_free ##### -->
+<para>
+
+</para>
+
+@addr: 
+
+
+<!-- ##### FUNCTION xice_address_dup ##### -->
+<para>
+
+</para>
+
+@addr: 
+@Returns: 
+
+
+<!-- ##### FUNCTION xice_address_set_ipv4 ##### -->
+<para>
+
+</para>
+
+@addr: 
+@addr_ipv4: 
+
+
+<!-- ##### FUNCTION xice_address_set_ipv6 ##### -->
+<para>
+
+</para>
+
+@addr: 
+@addr_ipv6: 
+
+
+<!-- ##### FUNCTION xice_address_set_port ##### -->
+<para>
+
+</para>
+
+@addr: 
+@port: 
+
+
+<!-- ##### FUNCTION xice_address_get_port ##### -->
+<para>
+
+</para>
+
+@addr: 
+@Returns: 
+
+
+<!-- ##### FUNCTION xice_address_set_from_string ##### -->
+<para>
+
+</para>
+
+@addr: 
+@str: 
+@Returns: 
+
+
+<!-- ##### FUNCTION xice_address_set_from_sockaddr ##### -->
+<para>
+
+</para>
+
+@addr: 
+@sin: 
+
+
+<!-- ##### FUNCTION xice_address_copy_to_sockaddr ##### -->
+<para>
+
+</para>
+
+@addr: 
+@sin: 
+
+
+<!-- ##### FUNCTION xice_address_equal ##### -->
+<para>
+
+</para>
+
+@a: 
+@b: 
+@Returns: 
+
+
+<!-- ##### FUNCTION xice_address_to_string ##### -->
+<para>
+
+</para>
+
+@addr: 
+@dst: 
+
+
+<!-- ##### FUNCTION xice_address_is_private ##### -->
+<para>
+
+</para>
+
+@addr: 
+@Returns: 
+
+
+<!-- ##### FUNCTION xice_address_is_valid ##### -->
+<para>
+
+</para>
+
+@addr: 
+@Returns: 
+
+
+<!-- ##### FUNCTION xice_address_ip_version ##### -->
+<para>
+
+</para>
+
+@addr: 
+@Returns: 
+
+

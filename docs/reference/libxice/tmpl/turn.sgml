@@ -1,0 +1,122 @@
+<!-- ##### SECTION Title ##### -->
+TURN
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### SECTION Image ##### -->
+
+
+<!-- ##### ENUM StunUsageTurnCompatibility ##### -->
+<para>
+
+</para>
+
+@STUN_USAGE_TURN_COMPATIBILITY_DRAFT9: 
+@STUN_USAGE_TURN_COMPATIBILITY_GOOGLE: 
+@STUN_USAGE_TURN_COMPATIBILITY_MSN: 
+@STUN_USAGE_TURN_COMPATIBILITY_OC2007: 
+@STUN_USAGE_TURN_COMPATIBILITY_RFC5766: 
+
+<!-- ##### ENUM StunUsageTurnRequestPorts ##### -->
+<para>
+
+</para>
+
+@STUN_USAGE_TURN_REQUEST_PORT_NORMAL: 
+@STUN_USAGE_TURN_REQUEST_PORT_EVEN: 
+@STUN_USAGE_TURN_REQUEST_PORT_EVEN_AND_RESERVE: 
+
+<!-- ##### ENUM StunUsageTurnReturn ##### -->
+<para>
+
+</para>
+
+@STUN_USAGE_TURN_RETURN_RELAY_SUCCESS: 
+@STUN_USAGE_TURN_RETURN_MAPPED_SUCCESS: 
+@STUN_USAGE_TURN_RETURN_ERROR: 
+@STUN_USAGE_TURN_RETURN_INVALID: 
+@STUN_USAGE_TURN_RETURN_ALTERNATE_SERVER: 
+
+<!-- ##### FUNCTION stun_usage_turn_create ##### -->
+<para>
+
+</para>
+
+@agent: 
+@msg: 
+@buffer: 
+@buffer_len: 
+@previous_response: 
+@request_ports: 
+@bandwidth: 
+@lifetime: 
+@username: 
+@username_len: 
+@password: 
+@password_len: 
+@compatibility: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_usage_turn_create_refresh ##### -->
+<para>
+
+</para>
+
+@agent: 
+@msg: 
+@buffer: 
+@buffer_len: 
+@previous_response: 
+@lifetime: 
+@username: 
+@username_len: 
+@password: 
+@password_len: 
+@compatibility: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_usage_turn_process ##### -->
+<para>
+
+</para>
+
+@msg: 
+@relay_addr: 
+@relay_addrlen: 
+@addr: 
+@addrlen: 
+@alternate_server: 
+@alternate_server_len: 
+@bandwidth: 
+@lifetime: 
+@compatibility: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_usage_turn_refresh_process ##### -->
+<para>
+
+</para>
+
+@msg: 
+@lifetime: 
+@compatibility: 
+@Returns: 
+
+

@@ -1,0 +1,246 @@
+<!-- ##### SECTION Title ##### -->
+StunAgent
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### SECTION Image ##### -->
+
+
+<!-- ##### TYPEDEF StunAgent ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ENUM StunCompatibility ##### -->
+<para>
+
+</para>
+
+@STUN_COMPATIBILITY_RFC3489: 
+@STUN_COMPATIBILITY_RFC5389: 
+@STUN_COMPATIBILITY_WLM2009: 
+@STUN_COMPATIBILITY_OC2007: 
+@STUN_COMPATIBILITY_LAST: 
+
+<!-- ##### ENUM StunAgentUsageFlags ##### -->
+<para>
+
+</para>
+
+@STUN_AGENT_USAGE_SHORT_TERM_CREDENTIALS: 
+@STUN_AGENT_USAGE_LONG_TERM_CREDENTIALS: 
+@STUN_AGENT_USAGE_USE_FINGERPRINT: 
+@STUN_AGENT_USAGE_ADD_SOFTWARE: 
+@STUN_AGENT_USAGE_IGNORE_CREDENTIALS: 
+@STUN_AGENT_USAGE_NO_INDICATION_AUTH: 
+@STUN_AGENT_USAGE_FORCE_VALIDATER: 
+@STUN_AGENT_USAGE_NO_ALIGNED_ATTRIBUTES: 
+
+<!-- ##### ENUM StunValidationStatus ##### -->
+<para>
+
+</para>
+
+@STUN_VALIDATION_SUCCESS: 
+@STUN_VALIDATION_NOT_STUN: 
+@STUN_VALIDATION_INCOMPLETE_STUN: 
+@STUN_VALIDATION_BAD_REQUEST: 
+@STUN_VALIDATION_UNAUTHORIZED_BAD_REQUEST: 
+@STUN_VALIDATION_UNAUTHORIZED: 
+@STUN_VALIDATION_UNMATCHED_RESPONSE: 
+@STUN_VALIDATION_UNKNOWN_REQUEST_ATTRIBUTE: 
+@STUN_VALIDATION_UNKNOWN_ATTRIBUTE: 
+
+<!-- ##### USER_FUNCTION StunMessageIntegrityValidate ##### -->
+<para>
+
+</para>
+
+@agent: 
+@message: 
+@username: 
+@username_len: 
+@password: 
+@password_len: 
+@user_data: 
+@Returns: 
+
+
+<!-- ##### STRUCT StunDefaultValidaterData ##### -->
+<para>
+
+</para>
+
+@username: 
+@username_len: 
+@password: 
+@password_len: 
+
+<!-- ##### FUNCTION stun_agent_init ##### -->
+<para>
+
+</para>
+
+@agent: 
+@known_attributes: 
+@compatibility: 
+@usage_flags: 
+
+
+<!-- ##### FUNCTION stun_agent_validate ##### -->
+<para>
+
+</para>
+
+@agent: 
+@msg: 
+@buffer: 
+@buffer_len: 
+@validater: 
+@validater_data: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_agent_default_validater ##### -->
+<para>
+
+</para>
+
+@agent: 
+@message: 
+@username: 
+@username_len: 
+@password: 
+@password_len: 
+@user_data: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_agent_init_request ##### -->
+<para>
+
+</para>
+
+@agent: 
+@msg: 
+@buffer: 
+@buffer_len: 
+@m: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_agent_init_indication ##### -->
+<para>
+
+</para>
+
+@agent: 
+@msg: 
+@buffer: 
+@buffer_len: 
+@m: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_agent_init_response ##### -->
+<para>
+
+</para>
+
+@agent: 
+@msg: 
+@buffer: 
+@buffer_len: 
+@request: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_agent_init_error ##### -->
+<para>
+
+</para>
+
+@agent: 
+@msg: 
+@buffer: 
+@buffer_len: 
+@request: 
+@err: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_agent_build_unknown_attributes_error ##### -->
+<para>
+
+</para>
+
+@agent: 
+@msg: 
+@buffer: 
+@buffer_len: 
+@request: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_agent_finish_message ##### -->
+<para>
+
+</para>
+
+@agent: 
+@msg: 
+@key: 
+@key_len: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_agent_forget_transaction ##### -->
+<para>
+
+</para>
+
+@agent: 
+@id: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_agent_set_software ##### -->
+<para>
+
+</para>
+
+@agent: 
+@software: 
+
+
+<!-- ##### FUNCTION stun_debug_enable ##### -->
+<para>
+
+</para>
+
+@void: 
+
+
+<!-- ##### FUNCTION stun_debug_disable ##### -->
+<para>
+
+</para>
+
+@void: 
+
+

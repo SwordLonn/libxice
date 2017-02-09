@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Debug messages</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<link rel="home" href="index.html" title="libxice Reference Manual">
+<link rel="up" href="ch02.html" title="Libxice helper functions">
+<link rel="prev" href="ch02.html" title="Libxice helper functions">
+<link rel="next" href="libxice-Network-interfaces-discovery.html" title="Network interfaces discovery">
+<meta name="generator" content="GTK-Doc V1.18 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="ch02.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="ch02.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">libxice Reference Manual</th>
+<td><a accesskey="n" href="libxice-Network-interfaces-discovery.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#libxice-Debug-messages.synopsis" class="shortcut">Top</a>
+                   | 
+                  <a href="#libxice-Debug-messages.description" class="shortcut">Description</a>
+</td></tr>
+</table>
+<div class="refentry">
+<a name="libxice-Debug-messages"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="libxice-Debug-messages.top_of_page"></a>Debug messages</span></h2>
+<p>Debug messages — Debug messages utility functions</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsect1">
+<a name="libxice-Debug-messages.stability-level"></a><h2>Stability Level</h2>
+Unstable, unless otherwise indicated
+</div>
+<div class="refsynopsisdiv">
+<a name="libxice-Debug-messages.synopsis"></a><h2>Synopsis</h2>
+<pre class="synopsis"><span class="returnvalue">void</span>                <a class="link" href="libxice-Debug-messages.html#xice-debug-enable" title="xice_debug_enable ()">xice_debug_enable</a>                   (<em class="parameter"><code><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> with_stun</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="libxice-Debug-messages.html#xice-debug-disable" title="xice_debug_disable ()">xice_debug_disable</a>                  (<em class="parameter"><code><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> with_stun</code></em>);
+</pre>
+</div>
+<div class="refsect1">
+<a name="libxice-Debug-messages.description"></a><h2>Description</h2>
+<p>
+</p>
+<p>Libxice can output a lot of information when debug messages are enabled.
+This can significantly help track down problems and/or understand what
+it's doing.</p>
+<p>
+</p>
+<p>
+</p>
+<p>You can enable/disable the debug messages by calling <a class="link" href="libxice-Debug-messages.html#xice-debug-enable" title="xice_debug_enable ()"><code class="function">xice_debug_enable()</code></a>
+or <a class="link" href="libxice-Debug-messages.html#xice-debug-disable" title="xice_debug_disable ()"><code class="function">xice_debug_disable()</code></a> and choosing whether you want only ICE debug messages
+or also stun debug messages.</p>
+<p>
+</p>
+<p>
+</p>
+<p>By default, the debug messages are disabled, unless the environment
+variable XICE_DEBUG is set, in which case, it must contain a comma separated
+list of flags specifying which debug to enable.</p>
+<p>
+</p>
+<p> The currently available flags are "xice", "stun", "pseudotcp",
+"pseudotcp-verbose" or "all" to enable all debug messages.</p>
+<p>
+</p>
+<p> If the 'pseudotcp' flag is enabled, then 'pseudotcp-verbose' gets
+automatically disabled. This is to allow the use of the 'all' flag without
+having verbose messages from pseudotcp. You can enable verbose debug messages
+from the pseudotcp layer by specifying 'pseudotcp-verbose' without the
+'pseudotcp' flag.</p>
+<p>
+</p>
+<p>
+</p>
+<p>This API is unstable and is subject to change at any time...
+More flags are to come and a better API to enable/disable each flag
+should be added.</p>
+<p>
+</p>
+</div>
+<div class="refsect1">
+<a name="libxice-Debug-messages.details"></a><h2>Details</h2>
+<div class="refsect2">
+<a name="xice-debug-enable"></a><h3>xice_debug_enable ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                xice_debug_enable                   (<em class="parameter"><code><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> with_stun</code></em>);</pre>
+<p>
+Enables libxice debug output to the terminal
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>with_stun</code></em> :</span></p></td>
+<td>Also enable stun debugging messages</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="xice-debug-disable"></a><h3>xice_debug_disable ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                xice_debug_disable                  (<em class="parameter"><code><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> with_stun</code></em>);</pre>
+<p>
+Disables libxice debug output to the terminal
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>with_stun</code></em> :</span></p></td>
+<td>Also disable stun debugging messages</td>
+</tr></tbody>
+</table></div>
+</div>
+</div>
+</div>
+<div class="footer">
+<hr>
+          Generated by GTK-Doc V1.18</div>
+</body>
+</html>

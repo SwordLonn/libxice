@@ -1,0 +1,82 @@
+<!-- ##### SECTION Title ##### -->
+Bind
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### SECTION Image ##### -->
+
+
+<!-- ##### ENUM StunUsageBindReturn ##### -->
+<para>
+
+</para>
+
+@STUN_USAGE_BIND_RETURN_SUCCESS: 
+@STUN_USAGE_BIND_RETURN_ERROR: 
+@STUN_USAGE_BIND_RETURN_INVALID: 
+@STUN_USAGE_BIND_RETURN_ALTERNATE_SERVER: 
+@STUN_USAGE_BIND_RETURN_TIMEOUT: 
+
+<!-- ##### FUNCTION stun_usage_bind_create ##### -->
+<para>
+
+</para>
+
+@agent: 
+@msg: 
+@buffer: 
+@buffer_len: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_usage_bind_process ##### -->
+<para>
+
+</para>
+
+@msg: 
+@addr: 
+@addrlen: 
+@alternate_server: 
+@alternate_server_len: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_usage_bind_keepalive ##### -->
+<para>
+
+</para>
+
+@agent: 
+@msg: 
+@buf: 
+@len: 
+@Returns: 
+
+
+<!-- ##### FUNCTION stun_usage_bind_run ##### -->
+<para>
+
+</para>
+
+@srv: 
+@srvlen: 
+@addr: 
+@addrlen: 
+@Returns: 
+
+

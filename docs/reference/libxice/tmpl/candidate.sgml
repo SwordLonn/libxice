@@ -1,0 +1,109 @@
+<!-- ##### SECTION Title ##### -->
+XiceCandidate
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### SECTION Image ##### -->
+
+
+<!-- ##### STRUCT XiceCandidate ##### -->
+<para>
+
+</para>
+
+@type: 
+@transport: 
+@addr: 
+@base_addr: 
+@priority: 
+@stream_id: 
+@component_id: 
+@foundation: 
+@username: 
+@password: 
+@turn: 
+@sockptr: 
+
+<!-- ##### ENUM XiceCandidateType ##### -->
+<para>
+
+</para>
+
+@XICE_CANDIDATE_TYPE_HOST: 
+@XICE_CANDIDATE_TYPE_SERVER_REFLEXIVE: 
+@XICE_CANDIDATE_TYPE_PEER_REFLEXIVE: 
+@XICE_CANDIDATE_TYPE_RELAYED: 
+
+<!-- ##### ENUM XiceCandidateTransport ##### -->
+<para>
+
+</para>
+
+@XICE_CANDIDATE_TRANSPORT_UDP: 
+
+<!-- ##### STRUCT TurnServer ##### -->
+<para>
+
+</para>
+
+@server: 
+@username: 
+@password: 
+@type: 
+
+<!-- ##### ENUM XiceRelayType ##### -->
+<para>
+
+</para>
+
+@XICE_RELAY_TYPE_TURN_UDP: 
+@XICE_RELAY_TYPE_TURN_TCP: 
+@XICE_RELAY_TYPE_TURN_TLS: 
+
+<!-- ##### MACRO XICE_CANDIDATE_MAX_FOUNDATION ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION xice_candidate_new ##### -->
+<para>
+
+</para>
+
+@type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION xice_candidate_free ##### -->
+<para>
+
+</para>
+
+@candidate: 
+
+
+<!-- ##### FUNCTION xice_candidate_copy ##### -->
+<para>
+
+</para>
+
+@candidate: 
+@Returns: 
+
+

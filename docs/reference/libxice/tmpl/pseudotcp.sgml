@@ -1,0 +1,189 @@
+<!-- ##### SECTION Title ##### -->
+Pseudo TCP Socket
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### SECTION Image ##### -->
+
+
+<!-- ##### STRUCT PseudoTcpSocket ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ARG PseudoTcpSocket:callbacks ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG PseudoTcpSocket:conversation ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG PseudoTcpSocket:state ##### -->
+<para>
+
+</para>
+
+<!-- ##### ENUM PseudoTcpState ##### -->
+<para>
+
+</para>
+
+@TCP_LISTEN: 
+@TCP_SYN_SENT: 
+@TCP_SYN_RECEIVED: 
+@TCP_ESTABLISHED: 
+@TCP_CLOSED: 
+
+<!-- ##### ENUM PseudoTcpWriteResult ##### -->
+<para>
+
+</para>
+
+@WR_SUCCESS: 
+@WR_TOO_LARGE: 
+@WR_FAIL: 
+
+<!-- ##### STRUCT PseudoTcpCallbacks ##### -->
+<para>
+
+</para>
+
+@user_data: 
+@PseudoTcpOpened: 
+@PseudoTcpReadable: 
+@PseudoTcpWritable: 
+@PseudoTcpClosed: 
+@WritePacket: 
+
+<!-- ##### ENUM PseudoTcpDebugLevel ##### -->
+<para>
+
+</para>
+
+@PSEUDO_TCP_DEBUG_NONE: 
+@PSEUDO_TCP_DEBUG_NORMAL: 
+@PSEUDO_TCP_DEBUG_VERBOSE: 
+
+<!-- ##### FUNCTION pseudo_tcp_socket_new ##### -->
+<para>
+
+</para>
+
+@conversation: 
+@callbacks: 
+@Returns: 
+
+
+<!-- ##### FUNCTION pseudo_tcp_socket_connect ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION pseudo_tcp_socket_recv ##### -->
+<para>
+
+</para>
+
+@self: 
+@buffer: 
+@len: 
+@Returns: 
+
+
+<!-- ##### FUNCTION pseudo_tcp_socket_send ##### -->
+<para>
+
+</para>
+
+@self: 
+@buffer: 
+@len: 
+@Returns: 
+
+
+<!-- ##### FUNCTION pseudo_tcp_socket_close ##### -->
+<para>
+
+</para>
+
+@self: 
+@force: 
+
+
+<!-- ##### FUNCTION pseudo_tcp_socket_get_error ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION pseudo_tcp_socket_get_next_clock ##### -->
+<para>
+
+</para>
+
+@self: 
+@timeout: 
+@Returns: 
+
+
+<!-- ##### FUNCTION pseudo_tcp_socket_notify_clock ##### -->
+<para>
+
+</para>
+
+@self: 
+
+
+<!-- ##### FUNCTION pseudo_tcp_socket_notify_mtu ##### -->
+<para>
+
+</para>
+
+@self: 
+@mtu: 
+
+
+<!-- ##### FUNCTION pseudo_tcp_socket_notify_packet ##### -->
+<para>
+
+</para>
+
+@self: 
+@buffer: 
+@len: 
+@Returns: 
+
+
+<!-- ##### FUNCTION pseudo_tcp_set_debug_level ##### -->
+<para>
+
+</para>
+
+@level: 
+
+

@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Network interfaces discovery</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<link rel="home" href="index.html" title="libxice Reference Manual">
+<link rel="up" href="ch02.html" title="Libxice helper functions">
+<link rel="prev" href="libxice-Debug-messages.html" title="Debug messages">
+<link rel="next" href="pt02.html" title="Part II. STUN Library">
+<meta name="generator" content="GTK-Doc V1.18 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="libxice-Debug-messages.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="ch02.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">libxice Reference Manual</th>
+<td><a accesskey="n" href="pt02.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#libxice-Network-interfaces-discovery.synopsis" class="shortcut">Top</a>
+                   | 
+                  <a href="#libxice-Network-interfaces-discovery.description" class="shortcut">Description</a>
+</td></tr>
+</table>
+<div class="refentry">
+<a name="libxice-Network-interfaces-discovery"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="libxice-Network-interfaces-discovery.top_of_page"></a>Network interfaces discovery</span></h2>
+<p>Network interfaces discovery — Utility functions to discover local network interfaces</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsect1">
+<a name="libxice-Network-interfaces-discovery.stability-level"></a><h2>Stability Level</h2>
+Stable, unless otherwise indicated
+</div>
+<div class="refsynopsisdiv">
+<a name="libxice-Network-interfaces-discovery.synopsis"></a><h2>Synopsis</h2>
+<pre class="synopsis">
+#include &lt;interfaces.h&gt;
+
+<a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="returnvalue">gchar</span></a> *             <a class="link" href="libxice-Network-interfaces-discovery.html#xice-interfaces-get-ip-for-interface" title="xice_interfaces_get_ip_for_interface ()">xice_interfaces_get_ip_for_interface</a>
+                                                        (<em class="parameter"><code><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *interface_name</code></em>);
+<a href="http://library.gnome.org/devel/glib/unstable/glib-Doubly-Linked-Lists.html#GList"><span class="returnvalue">GList</span></a> *             <a class="link" href="libxice-Network-interfaces-discovery.html#xice-interfaces-get-local-interfaces" title="xice_interfaces_get_local_interfaces ()">xice_interfaces_get_local_interfaces</a>
+                                                        (<em class="parameter"><code><span class="type">void</span></code></em>);
+<a href="http://library.gnome.org/devel/glib/unstable/glib-Doubly-Linked-Lists.html#GList"><span class="returnvalue">GList</span></a> *             <a class="link" href="libxice-Network-interfaces-discovery.html#xice-interfaces-get-local-ips" title="xice_interfaces_get_local_ips ()">xice_interfaces_get_local_ips</a>       (<em class="parameter"><code><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> include_loopback</code></em>);
+</pre>
+</div>
+<div class="refsect1">
+<a name="libxice-Network-interfaces-discovery.description"></a><h2>Description</h2>
+<p>
+These utility functions allow the discovery of local network interfaces
+in a portable manner, they also allow finding the local ip addresses or
+the address allocated to a network interface.
+</p>
+</div>
+<div class="refsect1">
+<a name="libxice-Network-interfaces-discovery.details"></a><h2>Details</h2>
+<div class="refsect2">
+<a name="xice-interfaces-get-ip-for-interface"></a><h3>xice_interfaces_get_ip_for_interface ()</h3>
+<pre class="programlisting"><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="returnvalue">gchar</span></a> *             xice_interfaces_get_ip_for_interface
+                                                        (<em class="parameter"><code><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *interface_name</code></em>);</pre>
+<p>
+Retreives the IPv4 address of an interface by its name
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>interface_name</code></em> :</span></p></td>
+<td>name of local interface</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a newly-allocated string with the IP address</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="xice-interfaces-get-local-interfaces"></a><h3>xice_interfaces_get_local_interfaces ()</h3>
+<pre class="programlisting"><a href="http://library.gnome.org/devel/glib/unstable/glib-Doubly-Linked-Lists.html#GList"><span class="returnvalue">GList</span></a> *             xice_interfaces_get_local_interfaces
+                                                        (<em class="parameter"><code><span class="type">void</span></code></em>);</pre>
+<p>
+Get the list of local interfaces
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a newly-allocated <a href="http://library.gnome.org/devel/glib/unstable/glib-Doubly-Linked-Lists.html#GList"><span class="type">GList</span></a> of strings. The caller must free it.</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="xice-interfaces-get-local-ips"></a><h3>xice_interfaces_get_local_ips ()</h3>
+<pre class="programlisting"><a href="http://library.gnome.org/devel/glib/unstable/glib-Doubly-Linked-Lists.html#GList"><span class="returnvalue">GList</span></a> *             xice_interfaces_get_local_ips       (<em class="parameter"><code><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a> include_loopback</code></em>);</pre>
+<p>
+Get a list of local ipv4 interface addresses
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>include_loopback</code></em> :</span></p></td>
+<td>Include any loopback devices</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a newly-allocated <a href="http://library.gnome.org/devel/glib/unstable/glib-Doubly-Linked-Lists.html#GList"><span class="type">GList</span></a> of strings. The caller must free it.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+</div>
+<div class="footer">
+<hr>
+          Generated by GTK-Doc V1.18</div>
+</body>
+</html>

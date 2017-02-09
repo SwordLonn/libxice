@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
+  <bookinfo>
+    <title>libxice Reference Manual</title>
+    <releaseinfo>
+      The latest version of this documentation can be found on-line at
+      <ulink role="online-location" url="http://xice.freedesktop.org/libxice/index.html">http://xice.freedesktop.org/libxice/</ulink>.
+    </releaseinfo>
+  </bookinfo>
+
+
+  <part>
+    <title>ICE Library</title>
+    <chapter>
+      <xi:include href="xml/agent.xml"/>
+      <xi:include href="xml/address.xml"/>
+      <xi:include href="xml/candidate.xml"/>
+    </chapter>
+    <chapter>
+      <title>Libxice helper functions </title>
+      <xi:include href="xml/debug.xml"/>
+      <xi:include href="xml/interfaces.xml"/>
+    </chapter>
+  </part>
+  <part>
+    <title>STUN Library</title>
+    <chapter>
+      <xi:include href="xml/stunagent.xml"/>
+      <xi:include href="xml/stunmessage.xml"/>
+    </chapter>
+    <chapter>
+      <title>STUN usages</title>
+      <xi:include href="xml/bind.xml"/>
+      <xi:include href="xml/ice.xml"/>
+      <xi:include href="xml/turn.xml"/>
+      <xi:include href="xml/timer.xml"/>
+    </chapter>
+  </part>
+
+  <part>
+    <title>Pseudo TCP Socket implementation</title>
+    <chapter>
+      <xi:include href="xml/pseudotcp.xml"/>
+    </chapter>
+  </part>
+
+  <para>The libxice library contains the ICE library and the
+    STUN library as well as a Pseudo TCP socket implementation.
+  </para>
+</book>

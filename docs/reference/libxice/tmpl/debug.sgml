@@ -1,0 +1,38 @@
+<!-- ##### SECTION Title ##### -->
+Debug messages
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### SECTION Image ##### -->
+
+
+<!-- ##### FUNCTION xice_debug_enable ##### -->
+<para>
+
+</para>
+
+@with_stun: 
+
+
+<!-- ##### FUNCTION xice_debug_disable ##### -->
+<para>
+
+</para>
+
+@with_stun: 
+
+
