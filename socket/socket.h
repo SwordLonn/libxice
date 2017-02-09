@@ -103,13 +103,6 @@ void
 xice_socket_free (XiceSocket *sock);
 
 int xice_socket_get_fd(XiceSocket* sock);
-//#include "udp-bsd.h"
-//#include "tcp-bsd.h"
-//#include "pseudossl.h"
-//#include "socks5.h"
-//#include "http.h"
-//#include "turn.h"
-//#include "tcp-turn.h"
 
 G_END_DECLS
 

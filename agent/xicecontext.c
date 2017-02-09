@@ -7,23 +7,105 @@
 #include "tcp-bsd.h"
 #include "udp-bsd.h"
 
-struct _XiceContext
+void xice_context_destroy(XiceContext* ctx) {
+	g_assert(ctx != NULL);
+
+	g_assert(ctx->destroy != NULL);
+
+	ctx->destroy(ctx);
+
+	g_slice_free(XiceContext, ctx);
+}
+
+XiceSocket* xice_context_tcp_bsd_socket_new(XiceContext* ctx, XiceAddress* addr) {
+	g_assert(ctx != NULL && ctx->create_tcp_socket != NULL);
+	g_assert(addr != NULL);
+	
+	return ctx->create_tcp_socket(ctx, addr);
+}
+
+XiceSocket* xice_context_udp_bsd_socket_new(XiceContext* ctx, XiceAddress* addr) {
+	g_assert(ctx != NULL && ctx->create_udp_socket != NULL);
+	g_assert(addr != NULL);
+	
+	return ctx->create_udp_socket(ctx, addr);
+}
+
+XiceTimer* xice_timer_new(XiceContext* ctx, guint interval,
+	XiceTimerFunc function, gpointer data) {
+	XiceTimer* timer;
+
+	g_assert(ctx != NULL && ctx->create_timer != NULL);
+	g_assert(function != NULL);
+
+	timer = ctx->create_timer(ctx, interval, function, data);
+
+	return timer;
+}
+
+void xice_timer_start(XiceTimer* timer) {
+	g_assert(timer != NULL && timer->start != NULL);
+
+	timer->start(timer);
+}
+
+void xice_timer_stop(XiceTimer* timer) {
+	g_assert(timer != NULL && timer->stop != NULL);
+
+	timer->stop(timer);
+}
+
+void xice_timer_destroy(XiceTimer* timer) {
+	g_assert(timer != NULL && timer->destroy != NULL);
+	timer->destroy(timer);
+	g_slice_free(XiceTimer, timer);
+}
+
+
+guint xice_add_timeout_seconds(XiceContext* ctx, guint interval,
+	XiceTimeoutFunc function,
+	gpointer data) {
+	g_assert(ctx != NULL && ctx->add_timeout_seconds != NULL);
+	g_assert(function != NULL);
+
+	return ctx->add_timeout_seconds(ctx, interval, function, data);
+}
+
+void xice_remove_timeout(XiceContext* ctx, guint timeout) {
+	g_assert(ctx != NULL && ctx->remove_timeout != NULL);
+
+	ctx->remove_timeout(ctx, timeout);
+}
+
+
+static XiceSocket* gio_create_tcp_socket(XiceContext* ctx, XiceAddress* addr);
+static XiceSocket* gio_create_udp_socket(XiceContext* ctx, XiceAddress* addr);
+
+static XiceTimer* gio_create_timer(XiceContext* ctx, guint interval,
+	XiceTimerFunc function, gpointer data);
+
+static guint gio_add_timeout_seconds(XiceContext* ctx, guint interval,
+	XiceTimeoutFunc function,
+	gpointer data);
+static void gio_remove_timeout(XiceContext* ctx, guint timeout);
+
+static void gio_destroy(XiceContext *ctx);
+
+static void gio_timer_start(XiceTimer* timer);
+static void gio_timer_stop(XiceTimer* timer);
+static void gio_timer_destroy(XiceTimer* timer);
+
+typedef struct _XiceContextGIO
 {
 	GMainContext *main_context;     /* main context pointer */
-	int ref_count;
 	GList* timeout_list;
-};
+}XiceContextGIO;
 
-struct _XiceTimer
+typedef struct _XiceTimerGIO
 {
 	GSource* source;
-	XiceContext* context;
-	guint interval;
-	XiceTimerFunc func;
-	gpointer data;
-	guint id;
-	int ref_count;
-};
+	XiceContextGIO* context;
+}XiceTimerGIO;
 
 
 typedef struct {
@@ -32,6 +114,24 @@ typedef struct {
 	gpointer data;
 	guint id;
 }TimeOutCtx;
+
+XiceContext *xice_context_new(GMainContext* ctx)
+{
+	XiceContext* xctx = g_slice_new0(XiceContext);
+	XiceContextGIO* gio = g_slice_new0(XiceContextGIO);
+	
+	gio->main_context = g_main_context_ref(ctx);
+	gio->timeout_list = NULL;
+	
+	xctx->priv = gio;
+	xctx->create_tcp_socket = gio_create_tcp_socket;
+	xctx->create_udp_socket = gio_create_udp_socket;
+	xctx->create_timer = gio_create_timer;
+	xctx->add_timeout_seconds = gio_add_timeout_seconds;
+	xctx->remove_timeout = gio_remove_timeout;
+	xctx->destroy = gio_destroy;
+	return xctx;
+}
 
 static void
 _priv_set_socket_tos(XiceSocket *sock, gint tos)
@@ -50,68 +150,121 @@ _priv_set_socket_tos(XiceSocket *sock, gint tos)
 #endif
 }
 
-XiceSocket *xice_context_tcp_bsd_socket_new(XiceContext* ctx, XiceAddress* addr) {
-	XiceSocket* sock = xice_tcp_bsd_socket_new(ctx->main_context, addr);
+static XiceSocket *gio_create_tcp_socket(XiceContext* ctx, XiceAddress* addr) {
+	XiceContextGIO* gio = ctx->priv;
+	XiceSocket* sock = xice_tcp_bsd_socket_new(gio->main_context, addr);
 	if (sock != NULL) {
 		_priv_set_socket_tos(sock, 0);
 	}
 	return sock;
 }
 
-XiceSocket* xice_context_udp_bsd_socket_new(XiceContext* ctx, XiceAddress* addr) {
-	XiceSocket* sock = xice_udp_bsd_socket_new(ctx->main_context, addr);
+static XiceSocket* gio_create_udp_socket(XiceContext* ctx, XiceAddress* addr) {
+	XiceContextGIO* gio = ctx->priv;
+	XiceSocket* sock = xice_udp_bsd_socket_new(gio->main_context, addr);
 	if (sock != NULL) {
 		_priv_set_socket_tos(sock, 0);
 	}
 	return sock;
 }
 
-XiceContext* xice_context_new(GMainContext* ctx) {
-	XiceContext* context;
-	context = g_slice_new0(XiceContext);
-	context->ref_count = 1;
-	context->main_context = ctx;
-	context->timeout_list = g_list_alloc();
-	g_main_context_ref(ctx);
-	return context;
-}
+static XiceTimer* gio_create_timer(XiceContext* ctx, guint interval,
+	XiceTimerFunc function, gpointer data) {
+	XiceContextGIO* gio = ctx->priv;
 
-XiceContext* xice_context_ref(XiceContext* ctx) {
-	g_atomic_int_inc(&ctx->ref_count);
-	return ctx;
-}
-
-void xice_context_unref(XiceContext* ctx) {
-	GList* i;
-	if (!g_atomic_int_dec_and_test(&ctx->ref_count))
-		return;
-
-	g_main_context_unref(ctx->main_context);
-	for (i = ctx->timeout_list; i; i = i->next) {
-		TimeOutCtx* ctx = i->data;
-		g_slice_free(TimeOutCtx, ctx);
-	}
-	g_list_free(ctx->timeout_list);
-	g_slice_free(XiceContext, ctx);
-}
-
-XiceTimer* xice_timer_new(XiceContext* ctx, guint interval,
-	XiceTimerFunc function, gpointer data)
-{
 	XiceTimer* timer = g_slice_new0(XiceTimer);
-
-	timer->ref_count = 1;
-	timer->context = ctx;
+	XiceTimerGIO* tgio = g_slice_new0(XiceTimerGIO);
+	tgio->context = gio;
 	timer->interval = interval;
 	timer->func = function;
 	timer->data = data;
-	timer->source = NULL;
+	tgio->source = NULL;
+
+	timer->priv = tgio;
+
+	timer->start = gio_timer_start;
+	timer->stop = gio_timer_stop;
+	timer->destroy = gio_timer_destroy;
 
 	return timer;
 }
 
+static boolean timeout_func(gpointer data) {
+	TimeOutCtx* ctx = (TimeOutCtx*)data;
+	GSource* source = g_main_current_source();
+	boolean ret = TRUE;
+	GList* i;
+	XiceContextGIO* gio = ctx->context->priv;
+
+	if (g_source_is_destroyed(source)) {
+		ret = FALSE;
+		goto end;
+	}
+	if (ctx->func) {
+		ret = ctx->func(ctx->id, ctx->data);
+	}
+
+end:
+	for (i = gio->timeout_list; i; i = i->next) {
+		TimeOutCtx* tctx = i->data;
+		if (tctx->id == ctx->id) {
+			gio->timeout_list = g_list_remove(gio->timeout_list, i);
+			g_slice_free(TimeOutCtx, tctx);
+			break;
+		}
+	}
+	return ret;
+}
+
+static guint gio_add_timeout_seconds(XiceContext* ctx, guint interval,
+	XiceTimeoutFunc function,
+	gpointer data) {
+	TimeOutCtx* tctx = g_slice_new0(TimeOutCtx);
+	XiceContextGIO* gio = ctx->priv;
+	tctx->func = function;
+	tctx->data = data;
+	tctx->context = ctx;
+	tctx->id = g_timeout_add_seconds(interval,
+		(GSourceFunc)timeout_func, tctx);
+
+	gio->timeout_list = g_list_prepend(gio->timeout_list, tctx);
+	return tctx->id;
+}
+
+static void gio_remove_timeout(XiceContext* ctx, guint timeout) {
+	XiceContextGIO* gio = ctx->priv;
+	GList* i;
+	for (i = gio->timeout_list; i; i = i->next) {
+		TimeOutCtx* tctx = i->data;
+		if (tctx->id == timeout) {
+			gio->timeout_list = g_list_remove(gio->timeout_list, i);
+			g_slice_free(TimeOutCtx, tctx);
+			break;
+		}
+	}
+	g_source_remove(timeout);
+}
+
+static void gio_destroy(XiceContext *ctx) {
+	XiceContextGIO* gio = ctx->priv;
+	GList* i;
+
+	for (i = gio->timeout_list; i; i = i->next) {
+		TimeOutCtx* tctx = i->data;
+		g_source_remove(tctx->id);
+		g_slice_free(TimeOutCtx, tctx);
+	}
+
+	g_list_free_full(gio->timeout_list, NULL);
+
+	g_main_context_unref(gio->main_context);
+	g_slice_free(XiceContextGIO, gio);
+	ctx->priv = NULL;
+}
+
 static gboolean priv_timeout_cb(gpointer user_data) {
 	XiceTimer* timer = (XiceTimer*)user_data;
+	XiceTimerGIO* gio = timer->priv;
 	GSource* source = g_main_current_source();
 	if (g_source_is_destroyed(source)) {
 		return FALSE;
@@ -122,91 +275,41 @@ static gboolean priv_timeout_cb(gpointer user_data) {
 	return TRUE;
 }
 
-void xice_timer_start(XiceTimer* timer) {
-	if (timer->source) {
-		xice_timer_stop(timer);
+static void gio_timer_start(XiceTimer* timer)
+{
+	XiceTimerGIO* gio;
+	g_assert(timer != NULL);
+	gio = timer->priv;
+	g_assert(gio != NULL);
+	if (gio->source) {
+		gio_timer_stop(timer);
 	}
-	timer->source = g_timeout_source_new(timer->interval);
-	g_source_set_callback(timer->source, (GSourceFunc)priv_timeout_cb, timer, NULL);
-	g_source_attach(timer->source, timer->context->main_context);
+	gio->source = g_timeout_source_new(timer->interval);
+	g_source_set_callback(gio->source, (GSourceFunc)priv_timeout_cb, timer, NULL);
+	g_source_attach(gio->source, gio->context->main_context);
+	timer->id = g_source_get_id(gio->source);
 }
 
-void xice_timer_stop(XiceTimer* timer) {
-	xice_timer_destroy(timer);
-}
-
-void xice_timer_destroy(XiceTimer* timer) {
-	if (timer->source) {
-		g_source_destroy(timer->source);
-		g_source_unref(timer->source);
-		timer->source = NULL;
+static void gio_timer_stop(XiceTimer* timer)
+{
+	XiceTimerGIO* gio;
+	g_assert(timer != NULL);
+	gio = timer->priv;
+	if (gio->source) {
+		g_source_destroy(gio->source);
+		g_source_unref(gio->source);
+		gio->source = NULL;
 	}
 }
 
-XiceTimer* xice_timer_ref(XiceTimer* timer) {
-	g_atomic_int_inc(&timer->ref_count);
-	return timer;
-}
-
-void xice_timer_unref(XiceTimer* timer) {
-	
-	if (!g_atomic_int_dec_and_test(&timer->ref_count))
-		return;
-	if (timer->source) {
-		xice_timer_destroy(timer);
+static void gio_timer_destroy(XiceTimer* timer) 
+{
+	XiceTimerGIO* gio;
+	g_assert(timer != NULL);
+	gio = timer->priv;
+	if (gio != NULL) {
+		gio_timer_stop(timer);
+		g_slice_free(XiceTimerGIO, gio);
+		timer->priv = NULL;
 	}
-	g_slice_free(XiceTimer, timer);
-}
-
-static boolean timeout_func(gpointer data) {
-	TimeOutCtx* ctx = (TimeOutCtx*)data;
-	GSource* source = g_main_current_source();
-	boolean ret = TRUE;
-	GList* i;
-	if (g_source_is_destroyed(source)) {
-		ret = FALSE;
-		goto end;
-	}
-	if (ctx->func) {
-		ret = ctx->func(ctx->id, ctx->data);
-	}
-end:
-	//TODO remove from ctx
-	for (i = ctx->context->timeout_list; i; i = i->next) {
-		TimeOutCtx* tctx = i->data;
-		if (tctx->id == ctx->id) {
-			g_list_remove(ctx->context->timeout_list, i);
-			g_slice_free(TimeOutCtx, tctx);
-			break;
-		}
-	}
-	return ret;
-}
-
-guint xice_add_timeout_seconds(XiceContext* ctx, guint interval,
-	XiceTimeoutFunc     function,
-	gpointer        data) {
-	TimeOutCtx* tctx = g_slice_new0(TimeOutCtx);
-	tctx->func = function;
-	tctx->data = data;
-	tctx->context = ctx;
-    tctx->id =  g_timeout_add_seconds(interval,
-        (GSourceFunc)timeout_func, tctx);
-
-	g_list_append(ctx->timeout_list, tctx);
-	return tctx->id;
-}
-
-void xice_remove_timeout(XiceContext* ctx, guint timeout) {
-	GList* i;
-	for (i = ctx->timeout_list; i; i = i->next) {
-		TimeOutCtx* tctx = i->data;
-		if (tctx->id == timeout) {
-			g_list_remove(ctx->timeout_list, i);
-			g_slice_free(TimeOutCtx, tctx);
-			break;
-		}
-	}
-	
-	g_source_remove(timeout);
 }

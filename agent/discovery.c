@@ -101,7 +101,7 @@ void discovery_free (XiceAgent *agent)
     //g_source_destroy (agent->discovery_timer_source);
     //g_source_unref (agent->discovery_timer_source);
 	xice_timer_destroy(agent->discovery_timer_source);
-	xice_timer_unref(agent->discovery_timer_source);
+	//xice_timer_unref(agent->discovery_timer_source);
 	agent->discovery_timer_source = NULL;
   }
 }
@@ -153,12 +153,12 @@ void refresh_free_item (gpointer data, gpointer user_data)
 
   if (cand->timer_source != NULL) {
     xice_timer_destroy (cand->timer_source);
-    xice_timer_unref (cand->timer_source);
+    //xice_timer_unref (cand->timer_source);
     cand->timer_source = NULL;
   }
   if (cand->tick_source != NULL) {
     xice_timer_destroy (cand->tick_source);
-    xice_timer_unref (cand->tick_source);
+    //xice_timer_unref (cand->tick_source);
     cand->tick_source = NULL;
   }
 
@@ -1032,7 +1032,7 @@ static gboolean priv_discovery_tick (gpointer pointer)
       //g_source_destroy (agent->discovery_timer_source);
       //g_source_unref (agent->discovery_timer_source);
 	  xice_timer_destroy(agent->discovery_timer_source);
-	  xice_timer_unref(agent->discovery_timer_source);
+	  //xice_timer_unref(agent->discovery_timer_source);
 	  agent->discovery_timer_source = NULL;
     }
   }

@@ -396,7 +396,7 @@ int main (void)
   global_mainloop = NULL;
 
   g_source_remove (timer_id);
-  xice_context_unref(context);
+  xice_context_destroy(context);
 
 #ifdef G_OS_WIN32
   WSACleanup();

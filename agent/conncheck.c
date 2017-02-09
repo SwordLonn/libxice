@@ -439,7 +439,7 @@ static gboolean priv_conn_check_tick_unlocked(gpointer pointer)
 		   point */
 		if (agent->conncheck_timer_source != NULL) {
 			xice_timer_destroy(agent->conncheck_timer_source);
-			xice_timer_unref(agent->conncheck_timer_source);
+			//xice_timer_unref(agent->conncheck_timer_source);
 			agent->conncheck_timer_source = NULL;
 		}
 
@@ -485,7 +485,7 @@ static gboolean priv_conn_keepalive_retransmissions_tick(gpointer pointer)
 	}
 
 	xice_timer_destroy(pair->keepalive.tick_source);
-	xice_timer_unref(pair->keepalive.tick_source);
+	//xice_timer_unref(pair->keepalive.tick_source);
 	pair->keepalive.tick_source = NULL;
 
 	switch (stun_timer_refresh(&pair->keepalive.timer)) {
@@ -613,7 +613,7 @@ static gboolean priv_conn_keepalive_tick_unlocked(XiceAgent *agent)
 
 							if (p->keepalive.tick_source != NULL) {
 								xice_timer_destroy(p->keepalive.tick_source);
-								xice_timer_unref(p->keepalive.tick_source);
+								//xice_timer_unref(p->keepalive.tick_source);
 								p->keepalive.tick_source = NULL;
 							}
 
@@ -717,7 +717,7 @@ static gboolean priv_conn_keepalive_tick(gpointer pointer)
 	if (ret == FALSE) {
 		if (agent->keepalive_timer_source) {
 			xice_timer_destroy(agent->keepalive_timer_source);
-			xice_timer_unref(agent->keepalive_timer_source);
+			//xice_timer_unref(agent->keepalive_timer_source);
 			agent->keepalive_timer_source = NULL;
 		}
 	}
@@ -745,7 +745,7 @@ static gboolean priv_turn_allocate_refresh_retransmissions_tick(gpointer pointer
 
 
 	xice_timer_destroy(cand->tick_source);
-	xice_timer_unref(cand->tick_source);
+	//xice_timer_unref(cand->tick_source);
 	cand->tick_source = NULL;
 
 	switch (stun_timer_refresh(&cand->timer)) {
@@ -821,7 +821,7 @@ static void priv_turn_allocate_refresh_tick_unlocked(CandidateRefresh *cand)
 
 	if (cand->tick_source != NULL) {
 		xice_timer_destroy(cand->tick_source);
-		xice_timer_unref(cand->tick_source);
+		//xice_timer_unref(cand->tick_source);
 		cand->tick_source = NULL;
 	}
 
@@ -1123,7 +1123,7 @@ static gboolean priv_update_selected_pair(XiceAgent *agent, Component *component
 
 		if (component->selected_pair.keepalive.tick_source != NULL) {
 			xice_timer_destroy(component->selected_pair.keepalive.tick_source);
-			xice_timer_unref(component->selected_pair.keepalive.tick_source);
+			//xice_timer_unref(component->selected_pair.keepalive.tick_source);
 			component->selected_pair.keepalive.tick_source = NULL;
 		}
 
@@ -1420,7 +1420,7 @@ void conn_check_free(XiceAgent *agent)
 
 	if (agent->conncheck_timer_source != NULL) {
 		xice_timer_destroy(agent->conncheck_timer_source);
-		xice_timer_unref(agent->conncheck_timer_source);
+		//xice_timer_unref(agent->conncheck_timer_source);
 		agent->conncheck_timer_source = NULL;
 	}
 }
@@ -2534,7 +2534,7 @@ static gboolean priv_map_reply_to_relay_refresh(XiceAgent *agent, StunMessage *r
 							priv_turn_allocate_refresh_tick, cand);
 
 					xice_timer_destroy(cand->tick_source);
-					xice_timer_unref(cand->tick_source);
+					//xice_timer_unref(cand->tick_source);
 					cand->tick_source = NULL;
 				}
 				else if (res == STUN_USAGE_TURN_RETURN_ERROR) {
@@ -2602,7 +2602,7 @@ static gboolean priv_map_reply_to_keepalive_conncheck(XiceAgent *agent,
 				agent);
 			if (component->selected_pair.keepalive.tick_source) {
 				xice_timer_destroy(component->selected_pair.keepalive.tick_source);
-				xice_timer_unref(component->selected_pair.keepalive.tick_source);
+				//xice_timer_unref(component->selected_pair.keepalive.tick_source);
 				component->selected_pair.keepalive.tick_source = NULL;
 			}
 			component->selected_pair.keepalive.stun_message.buffer = NULL;

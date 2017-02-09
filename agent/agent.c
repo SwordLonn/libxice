@@ -786,8 +786,8 @@ xice_agent_set_property (
     {
     case PROP_MAIN_CONTEXT:
       agent->main_context = g_value_get_pointer (value);
-      if (agent->main_context != NULL)
-        xice_context_ref (agent->main_context);
+      //if (agent->main_context != NULL)
+      //  xice_context_ref (agent->main_context);
       break;
 
     case PROP_COMPATIBILITY:
@@ -894,7 +894,7 @@ static void priv_destroy_component_tcp (Component *component)
 {
     if (component->tcp_clock) {
       xice_timer_destroy (component->tcp_clock);
-      xice_timer_unref (component->tcp_clock);
+      //xice_timer_unref (component->tcp_clock);
       component->tcp_clock = NULL;
     }
     if (component->tcp) {
@@ -1072,7 +1072,7 @@ notify_pseudo_tcp_socket_clock (gpointer user_data)
   }
   if (component->tcp_clock) {
     xice_timer_destroy (component->tcp_clock);
-    xice_timer_unref (component->tcp_clock);
+    //xice_timer_unref (component->tcp_clock);
     component->tcp_clock = NULL;
   }
 
@@ -1092,7 +1092,7 @@ adjust_tcp_clock (XiceAgent *agent, Stream *stream, Component *component)
     if (pseudo_tcp_socket_get_next_clock (component->tcp, &timeout)) {
       if (component->tcp_clock) {
         xice_timer_destroy (component->tcp_clock);
-        xice_timer_unref (component->tcp_clock);
+        //xice_timer_unref (component->tcp_clock);
         component->tcp_clock = NULL;
       }
       component->tcp_clock = agent_timeout_add_with_context (agent,
@@ -1697,7 +1697,7 @@ static void priv_remove_keepalive_timer (XiceAgent *agent)
 {
   if (agent->keepalive_timer_source != NULL) {
     xice_timer_destroy (agent->keepalive_timer_source);
-    xice_timer_unref (agent->keepalive_timer_source);
+    //xice_timer_unref (agent->keepalive_timer_source);
     agent->keepalive_timer_source = NULL;
   }
 }
@@ -2269,8 +2269,8 @@ xice_agent_dispose (GObject *object)
   g_free (agent->software_attribute);
   agent->software_attribute = NULL;
 
-  if (agent->main_context != NULL)
-    xice_context_unref (agent->main_context);
+  //if (agent->main_context != NULL)
+  //  xice_context_unref (agent->main_context);
   agent->main_context = NULL;
 
   if (G_OBJECT_CLASS (xice_agent_parent_class)->dispose)
@@ -2504,8 +2504,8 @@ xice_agent_attach_recv (
 
   component->g_source_io_cb = NULL;
   component->data = NULL;
-  if (component->ctx)
-    xice_context_unref (component->ctx);
+  //if (component->ctx)
+  //  xice_context_unref (component->ctx);
   component->ctx = NULL;
 
   if (func) {
@@ -2514,8 +2514,8 @@ xice_agent_attach_recv (
     component->ctx = agent->main_context;
     //if (ctx)
     //  g_main_context_ref (ctx);
-	if (component->ctx)
-		xice_context_ref(component->ctx);
+	//if (component->ctx)
+	//	xice_context_ref(component->ctx);
 
     priv_attach_stream_component (agent, stream, component);
 

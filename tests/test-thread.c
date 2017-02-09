@@ -350,8 +350,8 @@ int main (void)
 
   g_main_loop_unref (error_loop);
 
-  xice_context_unref(lcontext);
-  xice_context_unref(rcontext);
+  xice_context_destroy(lcontext);
+  xice_context_destroy(rcontext);
 
 #ifdef G_OS_WIN32
   WSACleanup();

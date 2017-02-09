@@ -205,9 +205,9 @@ xice_turn_socket_new (XiceContext *ctx, XiceAddress *addr,
   priv->channels = NULL;
   priv->current_binding = NULL;
   priv->base_socket = base_socket;
-  if (ctx)
-    priv->ctx = xice_context_ref (ctx);
-
+  //if (ctx)
+  //  priv->ctx = xice_context_ref (ctx);
+  priv->ctx = ctx;
   if (compatibility == XICE_TURN_SOCKET_COMPATIBILITY_MSN ||
       compatibility == XICE_TURN_SOCKET_COMPATIBILITY_OC2007) {
     priv->username = g_base64_decode (username, &priv->username_len);
@@ -267,13 +267,13 @@ socket_close (XiceSocket *sock)
 
   if (priv->tick_source_channel_bind != NULL) {
     xice_timer_destroy (priv->tick_source_channel_bind);
-    xice_timer_unref (priv->tick_source_channel_bind);
+    //xice_timer_unref (priv->tick_source_channel_bind);
     priv->tick_source_channel_bind = NULL;
   }
 
   if (priv->tick_source_create_permission != NULL) {
     xice_timer_destroy (priv->tick_source_create_permission);
-    xice_timer_unref (priv->tick_source_create_permission);
+    //xice_timer_unref (priv->tick_source_create_permission);
     priv->tick_source_create_permission = NULL;
   }
 
@@ -283,7 +283,7 @@ socket_close (XiceSocket *sock)
     //g_source_destroy (r->source);
     //g_source_unref (r->source);
 	xice_timer_destroy(r->source);
-	xice_timer_unref(r->source);
+	//xice_timer_unref(r->source);
 	r->source = NULL;
 
     stun_agent_forget_transaction (&priv->agent, r->id);
@@ -300,8 +300,8 @@ socket_close (XiceSocket *sock)
 
   if (priv->permission_timeout_source)
     xice_remove_timeout(priv->ctx, priv->permission_timeout_source);
-  if (priv->ctx)
-    xice_context_unref (priv->ctx);
+  //if (priv->ctx)
+    //xice_context_unref (priv->ctx);
 
   g_free (priv->current_binding);
   g_free (priv->current_binding_msg);
@@ -654,7 +654,7 @@ priv_forget_send_request (gpointer pointer)
   //g_source_destroy (req->source);
   //g_source_unref (req->source);
   xice_timer_destroy(req->source);
-  xice_timer_unref(req->source);
+  //xice_timer_unref(req->source);
 
   req->source = NULL;
 
@@ -829,7 +829,7 @@ xice_turn_socket_parse_recv (XiceSocket *sock, XiceSocket **from_sock,
             //g_source_destroy (req->source);
             //g_source_unref (req->source);
 			xice_timer_destroy(req->source);
-			xice_timer_unref(req->source);
+			//xice_timer_unref(req->source);
 
             req->source = NULL;
 
@@ -1302,7 +1302,7 @@ priv_retransmissions_tick (gpointer pointer)
   if (priv_retransmissions_tick_unlocked (priv) == FALSE) {
     if (priv->tick_source_channel_bind != NULL) {
       xice_timer_destroy (priv->tick_source_channel_bind);
-      xice_timer_unref (priv->tick_source_channel_bind);
+      //xice_timer_unref (priv->tick_source_channel_bind);
       priv->tick_source_channel_bind = NULL;
     }
   }
@@ -1331,7 +1331,7 @@ priv_retransmissions_create_permission_tick (gpointer pointer)
     if (!priv_retransmissions_create_permission_tick_unlocked (priv, i)) {
       if (priv->tick_source_create_permission != NULL) {
         xice_timer_destroy (priv->tick_source_create_permission);
-        xice_timer_unref (priv->tick_source_create_permission);
+        //xice_timer_unref (priv->tick_source_create_permission);
         priv->tick_source_create_permission = NULL;
       }
     }
@@ -1351,7 +1351,7 @@ priv_schedule_tick (TurnPriv *priv)
     //g_source_destroy (priv->tick_source_channel_bind);
     //g_source_unref (priv->tick_source_channel_bind);
 	xice_timer_destroy(priv->tick_source_channel_bind);
-	xice_timer_unref(priv->tick_source_channel_bind);
+	//xice_timer_unref(priv->tick_source_channel_bind);
     priv->tick_source_channel_bind = NULL;
   }
 

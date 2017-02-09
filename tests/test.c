@@ -103,7 +103,7 @@ main (void)
 
   /* clean up */
   g_object_unref (agent);
-  xice_context_unref(context);
+  xice_context_destroy(context);
 #ifdef G_OS_WIN32
   WSACleanup();
 #endif
