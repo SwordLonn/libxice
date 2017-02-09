@@ -1,6 +1,6 @@
 
-Xice: Nice updated for other network frameworks
-===============================================
+Nice: GLib ICE library
+======================
 
 Copyright
 ---------
@@ -18,6 +18,8 @@ Requirements
 
  glib >= 2.10
  pkg-config
+ gupnp-igd >= 0.1.2 (optional)
+ gstreamer-0.10 >= 0.10.0 (optional)
 
 Build instructions
 ------------------
@@ -37,7 +39,7 @@ Structure
  agent/   - ICE agent
  docs/    - Design and API documentation
  gst/     - Gstreamer elements
- xice/    - libxice library
+ nice/    - libnice library
  random/  - random number generation
  socket/  - Socket abstraction layer
  stun/    - STUN implementation
@@ -46,7 +48,7 @@ Structure
 Relevant standards
 ------------------
 
-These standards are relevant to xice's current implementation.
+These standards are relevant to nice's current implementation.
 
 ICE draft 15
   http://tools.ietf.org/html/rfc5245
@@ -60,7 +62,7 @@ RTP
 XMPP Jingle ICE transport
   http://www.xmpp.org/extensions/xep-0176.html
 
-In future, xice may additionally support the following standards.
+In future, nice may additionally support the following standards.
 
 NAT-PMP
   http://files.dns-sd.org/draft-cheshire-nat-pmp.txt
