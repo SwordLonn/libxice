@@ -9,6 +9,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="contexts">
+      <UniqueIdentifier>{4a2e422d-94f7-4ee4-9185-1c57d8df6d56}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\agent\address.c">
@@ -71,9 +74,6 @@
     <ClCompile Include="..\..\stun\sha1.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\socket\socket.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\socket\socks5.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -95,9 +95,6 @@
     <ClCompile Include="..\..\stun\stunmessage.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\socket\tcp-bsd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\socket\tcp-turn.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -110,14 +107,29 @@
     <ClCompile Include="..\..\socket\turn.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\socket\udp-bsd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\stun\utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\agent\xicecontext.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\..\contexts\xicecontext.c">
+      <Filter>contexts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\contexts\giocontext.c">
+      <Filter>contexts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\contexts\giotcp.c">
+      <Filter>contexts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\contexts\gioudp.c">
+      <Filter>contexts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\contexts\xicesocket.c">
+      <Filter>contexts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\contexts\xicetimer.c">
+      <Filter>contexts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\contexts\giotimer.c">
+      <Filter>contexts</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -190,9 +202,6 @@
     <ClInclude Include="..\..\stun\sha1.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\socket\socket.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\socket\socks5.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -214,9 +223,6 @@
     <ClInclude Include="..\..\stun\stunmessage.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\socket\tcp-bsd.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\socket\tcp-turn.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -229,17 +235,32 @@
     <ClInclude Include="..\..\socket\turn.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\socket\udp-bsd.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\stun\utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\stun\win32_common.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\agent\xicecontext.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="..\..\contexts\xicecontext.h">
+      <Filter>contexts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\contexts\giocontext.h">
+      <Filter>contexts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\contexts\giotcp.h">
+      <Filter>contexts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\contexts\gioudp.h">
+      <Filter>contexts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\contexts\xicesocket.h">
+      <Filter>contexts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\contexts\xicetimer.h">
+      <Filter>contexts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\contexts\giotimer.h">
+      <Filter>contexts</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -43,7 +43,7 @@
 
 #include "stream.h"
 #include "agent.h"
-#include "xicecontext.h"
+#include "contexts/xicecontext.h"
 
 typedef struct
 {

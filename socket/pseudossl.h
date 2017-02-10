@@ -37,7 +37,7 @@
 #ifndef _PSEUDOSSL_H
 #define _PSEUDOSSL_H
 
-#include "socket.h"
+#include "contexts/xicesocket.h"
 
 G_BEGIN_DECLS
 

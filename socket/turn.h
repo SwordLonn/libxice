@@ -47,9 +47,9 @@ typedef enum {
 } XiceTurnSocketCompatibility;
 
 
-#include "socket.h"
+#include "contexts/xicesocket.h"
 #include "stun/stunmessage.h"
-#include "xicecontext.h"
+#include "contexts/xicecontext.h"
 
 G_BEGIN_DECLS
 

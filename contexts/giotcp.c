@@ -42,8 +42,9 @@
 # include "config.h"
 #endif
 
-#include "tcp-bsd.h"
-#include "agent-priv.h"
+#include "giotcp.h"
+//#include "agent/agent-priv.h"
+#include "debug.h"
 
 #include <string.h>
 #include <errno.h>
@@ -99,7 +100,7 @@ socket_callback(
 	}
 
 	if (sock->callback) {
-		return sock->callback(sock, XICE_SOCKET_READABLE, sock->data);
+		sock->callback(sock, XICE_SOCKET_READABLE, sock->data);
 	}
 
 	return TRUE;
@@ -164,7 +165,7 @@ xice_tcp_bsd_socket_new (GMainContext *ctx, XiceAddress *addr)
   }
 
   /* GSocket: All socket file descriptors are set to be close-on-exec. */
-  g_socket_set_blocking (gsock, false);
+  g_socket_set_blocking (gsock, FALSE);
 
   gaddr = g_socket_address_new_from_native (&name, sizeof (name));
 
@@ -354,12 +355,12 @@ socket_send_more (
   struct to_be_sent *tbs = NULL;
   GError *gerr = NULL;
 
-  agent_lock ();
+  //agent_lock ();
 
   if (g_source_is_destroyed (g_main_current_source ())) {
     xice_debug ("Source was destroyed. "
         "Avoided race condition in tcp-bsd.c:socket_send_more");
-    agent_unlock ();
+    //agent_unlock ();
     return FALSE;
   }
 
@@ -399,11 +400,11 @@ socket_send_more (
     g_source_unref (priv->io_source);
     priv->io_source = NULL;
 
-    agent_unlock ();
+    //agent_unlock ();
     return FALSE;
   }
 
-  agent_unlock ();
+  //agent_unlock ();
   return TRUE;
 }
 

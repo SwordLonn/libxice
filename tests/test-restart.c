@@ -413,8 +413,8 @@ int main (void)
    * - no multi-stream support
    * - no IPv6 support
    */
-  lcontext = xice_context_new(g_main_loop_get_context(global_mainloop));
-  rcontext = xice_context_new(g_main_loop_get_context(global_mainloop));
+  lcontext = xice_context_create("gio", g_main_loop_get_context(global_mainloop));
+  rcontext = xice_context_create("gio", g_main_loop_get_context(global_mainloop));
 
   /* step: create the agents L and R */
   lagent = xice_agent_new (lcontext, XICE_COMPATIBILITY_RFC5245);

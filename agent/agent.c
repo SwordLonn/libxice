@@ -57,7 +57,7 @@
 
 #include "debug.h"
 
-#include "socket.h"
+#include "contexts/xicesocket.h"
 #include "stun/usages/turn.h"
 #include "candidate.h"
 #include "component.h"
@@ -1333,7 +1333,7 @@ priv_add_new_candidate_discovery_turn (XiceAgent *agent,
       XiceSocket *new_socket;
       xice_address_set_port (&addr, 0);
 
-      new_socket = xice_context_udp_bsd_socket_new (agent->main_context, &addr);
+      new_socket = xice_create_udp_socket(agent->main_context, &addr);
       if (new_socket) {
         agent_attach_stream_component_socket (agent, stream,
             component, new_socket);
@@ -1350,7 +1350,7 @@ priv_add_new_candidate_discovery_turn (XiceAgent *agent,
         agent->proxy_ip != NULL &&
         xice_address_set_from_string (&proxy_server, agent->proxy_ip)) {
       xice_address_set_port (&proxy_server, agent->proxy_port);
-      socket = xice_context_tcp_bsd_socket_new (agent->main_context, &proxy_server);
+      socket = xice_create_tcp_socket(agent->main_context, &proxy_server);
 
       if (socket) {
         if (agent->proxy_type == XICE_PROXY_TYPE_SOCKS5) {
@@ -1367,7 +1367,7 @@ priv_add_new_candidate_discovery_turn (XiceAgent *agent,
 
     }
     if (socket == NULL) {
-      socket = xice_context_tcp_bsd_socket_new (agent->main_context, &turn->server);
+      socket = xice_create_tcp_socket(agent->main_context, &turn->server);
     }
 
     /* The TURN server may be invalid or not listening */
@@ -2630,7 +2630,7 @@ XiceTimer* agent_timeout_add_with_context(XiceAgent *agent, guint interval,
 	XiceTimer* timer;
 	g_return_val_if_fail(function != NULL, NULL);
 
-	timer = xice_timer_new(agent->main_context, interval, function, data);
+	timer = xice_create_timer(agent->main_context, interval, function, data);
 
 	xice_timer_start(timer);
 

@@ -40,7 +40,7 @@
 
 #include <glib.h>
 
-#include "socket.h"
+#include "xicesocket.h"
 
 gint
 xice_socket_recv (XiceSocket *sock, XiceAddress *from, guint len, gchar *buf)

@@ -54,7 +54,7 @@ G_BEGIN_DECLS
 
 typedef struct _XiceSocket XiceSocket;
 typedef enum _XiceSocketCondition XiceSocketCondition;
-typedef (*XiceSocketCallbackFunc)(
+typedef gboolean (*XiceSocketCallbackFunc)(
 	XiceSocket *socket,
 	XiceSocketCondition condition,
 	gpointer data);
@@ -80,7 +80,6 @@ struct _XiceSocket
   int (*get_fd)(XiceSocket *sock);
 
   void *priv;
-  //
   XiceSocketCallbackFunc callback;
   gpointer data;
 };

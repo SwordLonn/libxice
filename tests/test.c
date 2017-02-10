@@ -71,7 +71,7 @@ main (void)
   g_assert (xice_address_set_from_string (&addr_remote, "127.0.0.1"));
   xice_address_set_port (&addr_remote, 2345);
 
-  context = xice_context_new(NULL);
+  context = xice_context_create("gio", NULL);
 
   agent = xice_agent_new ( context, XICE_COMPATIBILITY_RFC5245);
 

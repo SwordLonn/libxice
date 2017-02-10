@@ -19,6 +19,7 @@ AC_CONFIG_FILES([
 	stun/tests/Makefile
 	stun/tools/Makefile
 	socket/Makefile
+        contexts/Makefile
 	xice/Makefile
 	xice/xice.pc
 	random/Makefile

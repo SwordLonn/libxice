@@ -37,7 +37,7 @@
 #ifndef _SOCKS5_H
 #define _SOCKS5_H
 
-#include "socket.h"
+#include "contexts/xicesocket.h"
 #include "agent.h"
 
 G_BEGIN_DECLS

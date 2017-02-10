@@ -37,7 +37,7 @@
 #ifndef _TCP_TURN_H
 #define _TCP_TURN_H
 
-#include "socket.h"
+#include "contexts/xicesocket.h"
 #include "agent.h"
 #include "turn.h"
 

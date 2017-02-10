@@ -58,8 +58,6 @@ libagent_la_SOURCES = \
 	discovery.h \
 	interfaces.c \
 	interfaces.h \
-        xicecontext.c \
-        xicecontext.h \
 	pseudotcp.h \
 	pseudotcp.c \
 	$(BUILT_SOURCES)
@@ -67,11 +65,14 @@ libagent_la_SOURCES = \
 libagent_la_LIBADD = \
 	$(top_builddir)/random/libxice-random.la \
 	$(top_builddir)/socket/libsocket.la \
-	$(top_builddir)/stun/libstun.la
+	$(top_builddir)/stun/libstun.la \
+        $(top_builddir)/contexts/libcontexts.la
+
 libagent_la_DEPENDENCIES = \
 	$(top_builddir)/random/libxice-random.la \
 	$(top_builddir)/socket/libsocket.la \
-	$(top_builddir)/stun/libstun.la
+	$(top_builddir)/stun/libstun.la \
+        $(top_builddir)/contexts/libcontexts.la
 
 pkginclude_HEADERS = agent.h candidate.h debug.h address.h interfaces.h pseudotcp.h
 

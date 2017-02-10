@@ -213,7 +213,7 @@ int main (void)
 
 
   global_mainloop = g_main_loop_new (NULL, FALSE);
-  context = xice_context_new(g_main_loop_get_context(global_mainloop));
+  context = xice_context_create("gio", g_main_loop_get_context(global_mainloop));
   /* step: create the agents L and R */
   lagent = xice_agent_new (context,
       XICE_COMPATIBILITY_GOOGLE);

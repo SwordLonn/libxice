@@ -2,12 +2,12 @@
 #define __XICE_CONTEXT_H__
 
 #include <glib-object.h>
-#include "socket.h"
+#include "xicesocket.h"
+#include "xicetimer.h"
+
+G_BEGIN_DECLS
 
 typedef struct _XiceContext XiceContext;
-typedef struct _XiceTimer XiceTimer;
-typedef gboolean(*XiceTimerFunc) (gpointer data);
-typedef gboolean(*XiceTimeoutFunc) (guint source, gpointer data);
 
 struct _XiceContext {
 
@@ -29,39 +29,21 @@ struct _XiceContext {
 	void* priv;
 };
 
-struct _XiceTimer {
-
-	//functions
-	void (*start)(XiceTimer* timer);
-	void (*stop)(XiceTimer* stop);
-	void (*destroy)(XiceTimer *timer);
-
-	//attributes
-	XiceContext* context;
-	void* priv;
-	guint interval;
-	XiceTimerFunc func;
-	gpointer data;
-	guint id;
-};
-
-XiceContext* xice_context_new(GMainContext* ctx);
+XiceContext* xice_context_create(const char* type, gpointer data);
 void xice_context_destroy(XiceContext* ctx);
 
-XiceSocket* xice_context_tcp_bsd_socket_new(XiceContext* ctx, XiceAddress* addr);
-XiceSocket* xice_context_udp_bsd_socket_new(XiceContext* ctx, XiceAddress* addr);
+XiceSocket* xice_create_tcp_socket(XiceContext* ctx, XiceAddress* addr);
+XiceSocket* xice_create_udp_socket(XiceContext* ctx, XiceAddress* addr);
 
-XiceTimer* xice_timer_new(XiceContext* ctx, guint interval,
+XiceTimer* xice_create_timer(XiceContext* ctx, guint interval,
 	XiceTimerFunc function, gpointer data);
-
-void xice_timer_start(XiceTimer* timer);
-void xice_timer_stop(XiceTimer* timer);
-void xice_timer_destroy(XiceTimer* timer);
 
 guint xice_add_timeout_seconds(XiceContext* ctx, guint interval,
 	XiceTimeoutFunc     function,
 	gpointer        data);
 
 void xice_remove_timeout(XiceContext* ctx, guint timeout);
+
+G_END_DECLS
 
 #endif

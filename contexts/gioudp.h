@@ -1,9 +1,10 @@
 /*
  * This file is part of the Xice GLib ICE library.
  *
- * (C) 2008-2009 Collabora Ltd.
+ * (C) 2006-2009 Collabora Ltd.
  *  Contact: Youness Alaoui
- * (C) 2008-2009 Nokia Corporation. All rights reserved.
+ * (C) 2006-2009 Nokia Corporation. All rights reserved.
+ *  Contact: Kai Vehmanen
  *
  * The contents of this file are subject to the Mozilla Public License Version
  * 1.1 (the "License"); you may not use this file except in compliance with
@@ -21,6 +22,7 @@
  * Corporation. All Rights Reserved.
  *
  * Contributors:
+ *   Dafydd Harries, Collabora Ltd.
  *   Youness Alaoui, Collabora Ltd.
  *
  * Alternatively, the contents of this file may be used under the terms of the
@@ -34,19 +36,16 @@
  * file under either the MPL or the LGPL.
  */
 
-#ifndef _TCP_BSD_H
-#define _TCP_BSD_H
+#ifndef _UDP_BSD_H
+#define _UDP_BSD_H
 
-#include "socket.h"
+#include "xicesocket.h"
 
 G_BEGIN_DECLS
 
-
 XiceSocket *
-xice_tcp_bsd_socket_new (GMainContext *ctx, XiceAddress *addr);
-
+xice_udp_bsd_socket_new (GMainContext* ctx, XiceAddress *addr);
 
 G_END_DECLS
 
-#endif /* _TCP_BSD_H */
-
+#endif /* _UDP_BSD_H */

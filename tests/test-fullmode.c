@@ -816,8 +816,8 @@ int main (void)
 
   global_mainloop = g_main_loop_new (NULL, FALSE);
 
-  lcontext = xice_context_new(g_main_loop_get_context(global_mainloop));
-  rcontext = xice_context_new(g_main_loop_get_context(global_mainloop));
+  lcontext = xice_context_create("gio", g_main_loop_get_context(global_mainloop));
+  rcontext = xice_context_create("gio", g_main_loop_get_context(global_mainloop));
   /* Note: impl limits ...
    * - no multi-stream support
    * - no IPv6 support

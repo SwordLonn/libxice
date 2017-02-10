@@ -115,7 +115,7 @@ typedef struct _XiceAgent XiceAgent;
 #include "address.h"
 #include "candidate.h"
 #include "debug.h"
-#include "xicecontext.h"
+#include "contexts/xicecontext.h"
 
 G_BEGIN_DECLS
 

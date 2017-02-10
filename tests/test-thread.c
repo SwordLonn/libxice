@@ -211,8 +211,8 @@ int main (void)
 
   error_loop = g_main_loop_new (NULL, FALSE);
 
-  lcontext = xice_context_new(ldmainctx);
-  rcontext = xice_context_new(rdmainctx);
+  lcontext = xice_context_create("gio", ldmainctx);
+  rcontext = xice_context_create("gio", rdmainctx);
 
   /* step: create the agents L and R */
   lagent = xice_agent_new (lcontext, XICE_COMPATIBILITY_MSN);

@@ -50,7 +50,7 @@ typedef struct _Component Component;
 #include "stun/usages/timer.h"
 #include "pseudotcp.h"
 #include "stream.h"
-#include "socket.h"
+#include "contexts/xicesocket.h"
 
 G_BEGIN_DECLS
 

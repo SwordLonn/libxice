@@ -357,7 +357,7 @@ priv_timeout_add_with_context(TurnPriv *priv, guint interval,
 
 	g_return_val_if_fail(function != NULL, NULL);
 
-	timer = xice_timer_new(priv->ctx, interval, function, data);
+	timer = xice_create_timer(priv->ctx, interval, function, data);
 
 	xice_timer_start(timer);
 

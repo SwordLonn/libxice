@@ -16,18 +16,20 @@ AM_CFLAGS = \
 	-I $(top_srcdir)/agent \
 	-I $(top_srcdir)/
 
-noinst_LTLIBRARIES = libsocket.la
+noinst_LTLIBRARIES = libcontexts.la
 
-libsocket_la_SOURCES = \
-	pseudossl.h \
-	pseudossl.c \
-	socks5.h \
-	socks5.c \
-	http.h \
-	http.c \
-	turn.h \
-	turn.c \
-	tcp-turn.h \
-	tcp-turn.c
-
-
+libcontexts_la_SOURCES = \
+	giocontext.c \
+	giocontext.h \
+	giotcp.c \
+	giotcp.h \
+	giotimer.c \
+	giotimer.h \
+	gioudp.c \
+	gioudp.h \
+	xicecontext.c \
+	xicecontext.h \
+	xicesocket.c \
+	xicesocket.h \
+	xicetimer.c \
+	xicetimer.h 

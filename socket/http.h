@@ -37,7 +37,7 @@
 #ifndef _HTTP_H
 #define _HTTP_H
 
-#include "socket.h"
+#include "contexts/xicesocket.h"
 #include "agent.h"
 
 G_BEGIN_DECLS

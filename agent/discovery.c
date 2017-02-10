@@ -57,13 +57,13 @@
 #include "agent-priv.h"
 #include "agent-signals-marshal.h"
 #include "component.h"
-#include "xicecontext.h"
+#include "contexts/xicecontext.h"
 
 #include "discovery.h"
 
 #include "stun/usages/bind.h"
 #include "stun/usages/turn.h"
-#include "socket.h"
+#include "contexts/xicesocket.h"
 
 
 static inline int priv_timer_expired (GTimeVal *timer, GTimeVal *now)
@@ -483,7 +483,7 @@ XiceCandidate *discovery_add_local_host_candidate (
 
   /* note: candidate username and password are left NULL as stream
      level ufrag/password are used */
-  udp_socket = xice_context_udp_bsd_socket_new (agent->main_context, address);
+  udp_socket = xice_create_udp_socket(agent->main_context, address);
   if (!udp_socket)
     goto errors;
 

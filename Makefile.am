@@ -12,6 +12,7 @@ SUBDIRS = \
 	stun \
 	socket \
 	random \
+        contexts \
 	agent \
 	xice \
 	docs \

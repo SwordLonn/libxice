@@ -61,9 +61,6 @@
 /* Define to 1 if assertions should be disabled. */
 #undef NDEBUG
 
-/* Public library function implementation */
-#undef XICEAPI_EXPORT
-
 /* Name of package */
 #undef PACKAGE
 
@@ -112,6 +109,9 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* Public library function implementation */
+#undef XICEAPI_EXPORT
 
 /* Define to `2' to get GNU/libc warnings. */
 /* Only define if -O1 or more is enabled */
