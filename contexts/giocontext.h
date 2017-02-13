@@ -11,11 +11,6 @@ XiceSocket* gio_create_udp_socket(XiceContext* ctx, XiceAddress* addr);
 XiceTimer* gio_create_timer(XiceContext* ctx, guint interval,
 	XiceTimerFunc function, gpointer data);
 
-guint gio_add_timeout_seconds(XiceContext* ctx, guint interval,
-	XiceTimeoutFunc function,
-	gpointer data);
-void gio_remove_timeout(XiceContext* ctx, guint timeout);
-
 void gio_destroy(XiceContext *ctx);
 
 typedef struct _XiceContextGIO

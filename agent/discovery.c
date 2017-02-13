@@ -1013,7 +1013,7 @@ static gboolean priv_discovery_tick_unlocked (gpointer pointer)
   return TRUE;
 }
 
-static gboolean priv_discovery_tick (gpointer pointer)
+static gboolean priv_discovery_tick (XiceTimer* timer, gpointer pointer)
 {
   XiceAgent *agent = pointer;
   gboolean ret;

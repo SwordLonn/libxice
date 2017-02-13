@@ -44,7 +44,7 @@
 
 #include "giotcp.h"
 //#include "agent/agent-priv.h"
-#include "debug.h"
+#include "agent/debug.h"
 
 #include <string.h>
 #include <errno.h>
@@ -100,7 +100,7 @@ socket_callback(
 	}
 
 	if (sock->callback) {
-		sock->callback(sock, XICE_SOCKET_READABLE, sock->data);
+		return sock->callback(sock, XICE_SOCKET_READABLE, sock->data);
 	}
 
 	return TRUE;

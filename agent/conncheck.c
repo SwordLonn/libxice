@@ -450,7 +450,7 @@ static gboolean priv_conn_check_tick_unlocked(gpointer pointer)
 	return keep_timer_going;
 }
 
-static gboolean priv_conn_check_tick(gpointer pointer)
+static gboolean priv_conn_check_tick(XiceTimer* timer, gpointer pointer)
 {
 	gboolean ret;
 
@@ -467,7 +467,7 @@ static gboolean priv_conn_check_tick(gpointer pointer)
 	return ret;
 }
 
-static gboolean priv_conn_keepalive_retransmissions_tick(gpointer pointer)
+static gboolean priv_conn_keepalive_retransmissions_tick(XiceTimer* timer, gpointer pointer)
 {
 	CandidatePair *pair = (CandidatePair *)pointer;
 
@@ -700,7 +700,7 @@ done:
 	return ret;
 }
 
-static gboolean priv_conn_keepalive_tick(gpointer pointer)
+static gboolean priv_conn_keepalive_tick(XiceTimer *timer, gpointer pointer)
 {
 	XiceAgent *agent = pointer;
 	gboolean ret;
@@ -726,7 +726,7 @@ static gboolean priv_conn_keepalive_tick(gpointer pointer)
 }
 
 
-static gboolean priv_turn_allocate_refresh_retransmissions_tick(gpointer pointer)
+static gboolean priv_turn_allocate_refresh_retransmissions_tick(XiceTimer* timer, gpointer pointer)
 {
 	CandidateRefresh *cand = (CandidateRefresh *)pointer;
 
@@ -848,7 +848,7 @@ static void priv_turn_allocate_refresh_tick_unlocked(CandidateRefresh *cand)
  *
  * @return will return FALSE when no more pending timers.
  */
-static gboolean priv_turn_allocate_refresh_tick(gpointer pointer)
+static gboolean priv_turn_allocate_refresh_tick(XiceTimer* timer, gpointer pointer)
 {
 	CandidateRefresh *cand = (CandidateRefresh *)pointer;
 

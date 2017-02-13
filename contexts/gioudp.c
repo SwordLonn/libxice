@@ -51,7 +51,7 @@
 
 #include "gioudp.h"
 //#include "agent-priv.h"
-#include "debug.h"
+#include "agent/debug.h"
 
 #ifndef G_OS_WIN32
 #include <unistd.h>
@@ -88,7 +88,7 @@ socket_callback(
 	}
 
 	if (sock->callback) {
-		sock->callback(sock, XICE_SOCKET_READABLE, sock->data);
+		return sock->callback(sock, XICE_SOCKET_READABLE, sock->data);
 	}
 
 	return TRUE;

@@ -161,7 +161,7 @@ void agent_signal_initial_binding_request_received (XiceAgent *agent, Stream *st
 
 guint64 agent_candidate_pair_priority (XiceAgent *agent, XiceCandidate *local, XiceCandidate *remote);
 
-XiceTimer *agent_timeout_add_with_context (XiceAgent *agent, guint interval, GSourceFunc function, gpointer data);
+XiceTimer *agent_timeout_add_with_context (XiceAgent *agent, guint interval, XiceTimerFunc function, gpointer data);
 
 void agent_attach_stream_component_socket (XiceAgent *agent,
     Stream *stream,

@@ -42,25 +42,28 @@ XiceTimer* xice_create_timer(XiceContext* ctx, guint interval,
 	return timer;
 }
 
-guint xice_add_timeout_seconds(XiceContext* ctx, guint interval,
-	XiceTimeoutFunc function,
-	gpointer data) {
-	g_assert(ctx != NULL && ctx->add_timeout_seconds != NULL);
-	g_assert(function != NULL);
-
-	return ctx->add_timeout_seconds(ctx, interval, function, data);
-}
-
-void xice_remove_timeout(XiceContext* ctx, guint timeout) {
-	g_assert(ctx != NULL && ctx->remove_timeout != NULL);
-
-	ctx->remove_timeout(ctx, timeout);
-}
-
 XiceContext *xice_context_create(const char* type, gpointer ctx)
 {
 	if (strcmp(type, "gio") == 0) {
 		return gio_context_create(ctx);
 	}
+#ifdef HAVE_LIBUV
+#include "libuvcontext.h"
+	if (strcmp(type, "libuv") == 0) {
+		return libuv_context_create(ctx);
+	}
+#endif
+#ifdef HAVE_LIBEVENT
+#include "libeventcontext.h"
+	if (strcmp(type, "libevent") == 0) {
+		return libevent_context_create(ctx);
+	}
+#endif
+#ifdef HAVE_LIBEV
+#include "libevcontext.h"
+	if (strcmp(type, "libev") == 0) {
+		return libev_context_create(ctx);
+	}
+#endif
 	return NULL;
 }

@@ -1055,7 +1055,7 @@ pseudo_tcp_socket_write_packet (PseudoTcpSocket *sock,
 
 
 static gboolean
-notify_pseudo_tcp_socket_clock (gpointer user_data)
+notify_pseudo_tcp_socket_clock (XiceTimer* timer, gpointer user_data)
 {
   TcpUserData *data = (TcpUserData *)user_data;
   Component *component = data->component;
@@ -2610,22 +2610,8 @@ xice_agent_get_selected_pair (XiceAgent *agent, guint stream_id,
   return ret;
 }
 
-//GSource* agent_timeout_add_with_context (XiceAgent *agent, guint interval,
-//    GSourceFunc function, gpointer data)
-//{
-  //GSource *source;
-
-  //g_return_val_if_fail (function != NULL, NULL);
-
-  //source = g_timeout_source_new (interval);
-
-  //g_source_set_callback (source, function, data, NULL);
-  //g_source_attach (source, agent->main_context);
-
-  //return source;
-//}
 XiceTimer* agent_timeout_add_with_context(XiceAgent *agent, guint interval,
-	GSourceFunc function, gpointer data)
+	XiceTimerFunc function, gpointer data)
 {
 	XiceTimer* timer;
 	g_return_val_if_fail(function != NULL, NULL);

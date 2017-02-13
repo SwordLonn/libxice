@@ -12,7 +12,7 @@ static gboolean priv_timeout_cb(gpointer user_data) {
 		return FALSE;
 	}
 	if (timer->func) {
-		return timer->func(timer->data);
+		return timer->func(timer, timer->data);
 	}
 	return TRUE;
 }

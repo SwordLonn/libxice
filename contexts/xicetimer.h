@@ -5,8 +5,7 @@
 G_BEGIN_DECLS
 
 typedef struct _XiceTimer XiceTimer;
-typedef gboolean(*XiceTimerFunc) (gpointer data);
-typedef gboolean(*XiceTimeoutFunc) (guint source, gpointer data);
+typedef gboolean(*XiceTimerFunc) (XiceTimer* timer, gpointer data);
 
 struct _XiceTimer {
 

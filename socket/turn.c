@@ -67,7 +67,7 @@ typedef struct {
   XiceAddress peer;
   uint16_t channel;
   gboolean renew;
-  guint timeout_source;
+  XiceTimer* timeout_source;
 } ChannelBinding;
 
 typedef struct {
@@ -100,8 +100,10 @@ typedef struct {
                                    there is an installed permission */
   GList *sent_permissions; /* ongoing permission installed */
   GHashTable *send_data_queues; /* stores a send data queue for per peer */
-  guint permission_timeout_source;      /* timer used to invalidate
-                                           permissions */
+  //guint permission_timeout_source;      /* timer used to invalidate
+                                           //permissions */
+  XiceTimer *permission_timeout_source;
+
 } TurnPriv;
 
 
@@ -126,7 +128,7 @@ static gboolean socket_is_reliable (XiceSocket *sock);
 
 static void priv_process_pending_bindings (TurnPriv *priv);
 static gboolean priv_retransmissions_tick_unlocked (TurnPriv *priv);
-static gboolean priv_retransmissions_tick (gpointer pointer);
+static gboolean priv_retransmissions_tick (XiceTimer* timer, gpointer pointer);
 static void priv_schedule_tick (TurnPriv *priv);
 static void priv_send_turn_message (TurnPriv *priv, TURNMessage *msg);
 static gboolean priv_send_create_permission (TurnPriv *priv,  StunMessage *resp,
@@ -136,7 +138,7 @@ static gboolean priv_send_channel_bind (TurnPriv *priv, StunMessage *resp,
     const XiceAddress *peer);
 static gboolean priv_add_channel_binding (TurnPriv *priv,
     const XiceAddress *peer);
-static gboolean priv_forget_send_request (gpointer pointer);
+static gboolean priv_forget_send_request (XiceTimer* timer, gpointer pointer);
 static void priv_clear_permissions (TurnPriv *priv);
 
 static guint
@@ -254,9 +256,10 @@ socket_close (XiceSocket *sock)
 
   for (i = priv->channels; i; i = i->next) {
     ChannelBinding *b = i->data;
-	if (b->timeout_source)
-		//g_source_remove (b->timeout_source);
-		xice_remove_timeout(priv->ctx, b->timeout_source);
+	if (b->timeout_source) {
+		xice_timer_destroy(b->timeout_source);
+		b->timeout_source = NULL;
+	}
     g_free (b);
   }
   g_list_free (priv->channels);
@@ -298,8 +301,11 @@ socket_close (XiceSocket *sock)
   g_list_free (priv->sent_permissions);
   g_hash_table_destroy (priv->send_data_queues);
 
-  if (priv->permission_timeout_source)
-    xice_remove_timeout(priv->ctx, priv->permission_timeout_source);
+  if (priv->permission_timeout_source) {
+	  xice_timer_destroy(priv->permission_timeout_source);
+	  priv->permission_timeout_source = NULL;
+  }
+    //xice_remove_timeout(priv->ctx, priv->permission_timeout_source);
   //if (priv->ctx)
     //xice_context_unref (priv->ctx);
 
@@ -334,24 +340,9 @@ socket_recv (XiceSocket *sock, XiceAddress *from, guint len, gchar *buf)
     return recv_len;
 }
 
-//static GSource *
-//priv_timeout_add_with_context (TurnPriv *priv, guint interval,
-//    GSourceFunc function, gpointer data)
-//{
-//  GSource *source;
-
-//  g_return_val_if_fail (function != NULL, NULL);
-
-//  source = g_timeout_source_new (interval);
-
-//  g_source_set_callback (source, function, data, NULL);
-//  g_source_attach (source, priv->ctx);
-
-//  return source;
-//}
 static XiceTimer*
 priv_timeout_add_with_context(TurnPriv *priv, guint interval,
-	GSourceFunc function, gpointer data)
+	XiceTimerFunc function, gpointer data)
 {
 	XiceTimer* timer;
 
@@ -634,7 +625,7 @@ socket_is_reliable (XiceSocket *sock)
 }
 
 static gboolean
-priv_forget_send_request (gpointer pointer)
+priv_forget_send_request (XiceTimer* timer, gpointer pointer)
 {
   SendRequest *req = pointer;
 
@@ -666,7 +657,7 @@ priv_forget_send_request (gpointer pointer)
 }
 
 static gboolean
-priv_permission_timeout (guint source, gpointer data)
+priv_permission_timeout (XiceTimer* timer, gpointer data)
 {
   TurnPriv *priv = (TurnPriv *) data;
 
@@ -682,7 +673,7 @@ priv_permission_timeout (guint source, gpointer data)
 }
 
 static gboolean
-priv_binding_expired_timeout (guint source, gpointer data)
+priv_binding_expired_timeout (XiceTimer* timer, gpointer data)
 {
   TurnPriv *priv = (TurnPriv *) data;
   GList *i;
@@ -691,19 +682,11 @@ priv_binding_expired_timeout (guint source, gpointer data)
   xice_debug ("Permission expired, refresh failed");
 
   agent_lock ();
-  /*
-  source = g_main_current_source ();
-  if (g_source_is_destroyed (source)) {
-    xice_debug ("Source was destroyed. "
-        "Avoided race condition in turn.c:priv_binding_expired_timeout");
-    agent_unlock ();
-    return FALSE;
-  }
-  */
+
   /* find current binding and destroy it */
   for (i = priv->channels ; i; i = i->next) {
     ChannelBinding *b = i->data;
-    if (b->timeout_source == source) {
+    if (b->timeout_source == timer) {
       priv->channels = g_list_remove (priv->channels, b);
       /* Make sure we don't free a currently being-refreshed binding */
       if (priv->current_binding_msg && !priv->current_binding) {
@@ -740,7 +723,7 @@ priv_binding_expired_timeout (guint source, gpointer data)
 }
 
 static gboolean
-priv_binding_timeout (guint source, gpointer data)
+priv_binding_timeout (XiceTimer* timer, gpointer data)
 {
   TurnPriv *priv = (TurnPriv *) data;
   GList *i;
@@ -761,12 +744,15 @@ priv_binding_timeout (guint source, gpointer data)
   /* find current binding and mark it for renewal */
   for (i = priv->channels ; i; i = i->next) {
     ChannelBinding *b = i->data;
-    if (b->timeout_source == source) {
+    if (b->timeout_source == timer) {
       b->renew = TRUE;
       /* Install timer to expire the permission */
-      //b->timeout_source = g_timeout_add_seconds (STUN_EXPIRE_TIMEOUT,
-      //        priv_binding_expired_timeout, priv);
-	  b->timeout_source = xice_add_timeout_seconds(priv->ctx, STUN_EXPIRE_TIMEOUT,
+	  if (b->timeout_source) {
+		  xice_timer_destroy(b->timeout_source);
+		  b->timeout_source = NULL;
+	  }
+
+	  b->timeout_source = priv_timeout_add_with_context(priv, STUN_EXPIRE_TIMEOUT, 
 		  priv_binding_expired_timeout, priv);
 	  /* Send renewal */
       if (!priv->current_binding_msg)
@@ -958,16 +944,15 @@ xice_turn_socket_parse_recv (XiceSocket *sock, XiceSocket **from_sock,
                 binding->renew = FALSE;
 
                 /* Remove any existing timer */
-				if (binding->timeout_source)
-					//g_source_remove (binding->timeout_source);
-					xice_remove_timeout(priv->ctx, binding->timeout_source);
+				if (binding->timeout_source) {
+					xice_timer_destroy(binding->timeout_source);
+					binding->timeout_source = NULL;
+				}
                 /* Install timer to schedule refresh of the permission */
-                //binding->timeout_source =
-                //    g_timeout_add_seconds (STUN_BINDING_TIMEOUT,
-                //        priv_binding_timeout, priv);
 				binding->timeout_source =
-					xice_add_timeout_seconds(priv->ctx, STUN_BINDING_TIMEOUT,
+					priv_timeout_add_with_context(priv, STUN_BINDING_TIMEOUT,
 						priv_binding_timeout, priv);
+
 			  }
               priv_process_pending_bindings (priv);
             }
@@ -1047,12 +1032,11 @@ xice_turn_socket_parse_recv (XiceSocket *sock, XiceSocket **from_sock,
             /* (will not schedule refresh if we got an error) */
             if (stun_message_get_class (&msg) == STUN_RESPONSE &&
                 !priv->permission_timeout_source) {
-              //priv->permission_timeout_source =
-              //    g_timeout_add_seconds (STUN_PERMISSION_TIMEOUT,
-              //        priv_permission_timeout, priv);
+
 				priv->permission_timeout_source =
-					xice_add_timeout_seconds(priv->ctx, STUN_PERMISSION_TIMEOUT,
+					priv_timeout_add_with_context(priv, STUN_PERMISSION_TIMEOUT,
 						priv_permission_timeout, priv);
+
 			}
 
             /* send enqued data */
@@ -1287,7 +1271,7 @@ priv_retransmissions_create_permission_tick_unlocked (TurnPriv *priv, GList *lis
 }
 
 static gboolean
-priv_retransmissions_tick (gpointer pointer)
+priv_retransmissions_tick (XiceTimer* timer, gpointer pointer)
 {
   TurnPriv *priv = pointer;
 
@@ -1312,7 +1296,7 @@ priv_retransmissions_tick (gpointer pointer)
 }
 
 static gboolean
-priv_retransmissions_create_permission_tick (gpointer pointer)
+priv_retransmissions_create_permission_tick (XiceTimer* timer, gpointer pointer)
 {
   TurnPriv *priv = pointer;
   GList *i, *next;

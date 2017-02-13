@@ -18,11 +18,6 @@ struct _XiceContext {
 	XiceTimer* (*create_timer)(XiceContext* ctx, guint interval,
 		XiceTimerFunc function, gpointer data);
 	
-	guint (*add_timeout_seconds)(XiceContext* ctx, guint interval,
-		XiceTimeoutFunc function,
-		gpointer data);
-	void (*remove_timeout)(XiceContext* ctx, guint timeout);
-	
 	void (*destroy)(XiceContext *ctx);
 
 	//attributes
@@ -37,12 +32,6 @@ XiceSocket* xice_create_udp_socket(XiceContext* ctx, XiceAddress* addr);
 
 XiceTimer* xice_create_timer(XiceContext* ctx, guint interval,
 	XiceTimerFunc function, gpointer data);
-
-guint xice_add_timeout_seconds(XiceContext* ctx, guint interval,
-	XiceTimeoutFunc     function,
-	gpointer        data);
-
-void xice_remove_timeout(XiceContext* ctx, guint timeout);
 
 G_END_DECLS
 
