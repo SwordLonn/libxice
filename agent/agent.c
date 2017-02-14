@@ -2389,29 +2389,6 @@ xice_agent_g_source_cb (
  * Attaches one socket handle to the main loop event context
  */
 
-//void
-//agent_attach_stream_component_socket (XiceAgent *agent,
-//    Stream *stream,
-//    Component *component,
-//    XiceSocket *socket)
-//{
-//  GSource *source;
-//  IOCtx *ctx;
-//
-//  if (!component->ctx)
-//    return;
-//
-//  /* note: without G_IO_ERR the glib mainloop goes into
-//   *       busyloop if errors are encountered */
-//  source = g_socket_create_source(socket->fileno, G_IO_IN | G_IO_ERR, NULL);
-//
-//  ctx = io_ctx_new (agent, stream, component, socket, source);
-//  g_source_set_callback (source, (GSourceFunc) xice_agent_g_source_cb,
-//      ctx, (GDestroyNotify) io_ctx_free);
-//  xice_debug ("Agent %p : Attach source %p (stream %u).", agent, source, stream->id);
-//  g_source_attach (source, component->ctx);
-//  component->gsources = g_slist_append (component->gsources, source);
-//}
 void
 agent_attach_stream_component_socket(XiceAgent *agent,
 	Stream *stream,

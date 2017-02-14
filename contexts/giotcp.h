@@ -43,7 +43,7 @@ G_BEGIN_DECLS
 
 
 XiceSocket *
-xice_tcp_bsd_socket_new (GMainContext *ctx, XiceAddress *addr);
+gio_tcp_socket_create (GMainContext *ctx, XiceAddress *addr);
 
 
 G_END_DECLS

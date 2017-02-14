@@ -5,6 +5,18 @@
 #include "giotcp.h"
 #include "gioudp.h"
 
+typedef struct _XiceContextGIO
+{
+	GMainContext *main_context;     /* main context pointer */
+}XiceContextGIO;
+
+static XiceSocket* gio_create_tcp_socket(XiceContext* ctx, XiceAddress* addr);
+static XiceSocket* gio_create_udp_socket(XiceContext* ctx, XiceAddress* addr);
+static XiceTimer* gio_create_timer(XiceContext* ctx, guint interval,
+	XiceTimerFunc function, gpointer data);
+
+static void gio_destroy(XiceContext *ctx);
+
 static void
 _priv_set_socket_tos(XiceSocket *sock, gint tos)
 {
@@ -28,7 +40,6 @@ XiceContext *gio_context_create(gpointer ctx)
 	XiceContextGIO* gio = g_slice_new0(XiceContextGIO);
 
 	gio->main_context = g_main_context_ref(ctx);
-	gio->timeout_list = NULL;
 
 	xctx->priv = gio;
 	xctx->create_tcp_socket = gio_create_tcp_socket;
@@ -39,51 +50,37 @@ XiceContext *gio_context_create(gpointer ctx)
 	return xctx;
 }
 
-XiceSocket *gio_create_tcp_socket(XiceContext* ctx, XiceAddress* addr) {
+static XiceSocket *gio_create_tcp_socket(XiceContext* ctx, XiceAddress* addr) {
 	XiceContextGIO* gio = ctx->priv;
-	XiceSocket* sock = xice_tcp_bsd_socket_new(gio->main_context, addr);
+	XiceSocket* sock = gio_tcp_socket_create(gio->main_context, addr);
 	if (sock != NULL) {
 		_priv_set_socket_tos(sock, 0);
 	}
 	return sock;
 }
 
-XiceSocket* gio_create_udp_socket(XiceContext* ctx, XiceAddress* addr) {
+static XiceSocket* gio_create_udp_socket(XiceContext* ctx, XiceAddress* addr) {
 	XiceContextGIO* gio = ctx->priv;
-	XiceSocket* sock = xice_udp_bsd_socket_new(gio->main_context, addr);
+	XiceSocket* sock = gio_udp_socket_create(gio->main_context, addr);
 	if (sock != NULL) {
 		_priv_set_socket_tos(sock, 0);
 	}
 	return sock;
 }
 
-XiceTimer* gio_create_timer(XiceContext* ctx, guint interval,
-	XiceTimerFunc function, gpointer data) {
+static XiceTimer* gio_create_timer(XiceContext* ctx, guint interval, 
+	XiceTimerFunc function, gpointer data)
+{
 	XiceContextGIO* gio = ctx->priv;
-
-	XiceTimer* timer = g_slice_new0(XiceTimer);
-	XiceTimerGIO* tgio = g_slice_new0(XiceTimerGIO);
-	tgio->context = gio->main_context;
-	timer->interval = interval;
-	timer->func = function;
-	timer->data = data;
-	tgio->source = NULL;
-
-	timer->priv = tgio;
-
-	timer->start = gio_timer_start;
-	timer->stop = gio_timer_stop;
-	timer->destroy = gio_timer_destroy;
-
+	XiceTimer* timer = gio_timer_create(gio->main_context, interval, function, data);
 	return timer;
 }
 
-void gio_destroy(XiceContext *ctx) {
+static void gio_destroy(XiceContext *ctx) {
 	XiceContextGIO* gio = ctx->priv;
-
-	g_list_free_full(gio->timeout_list, NULL);
 
 	g_main_context_unref(gio->main_context);
 	g_slice_free(XiceContextGIO, gio);
 	ctx->priv = NULL;
+	g_slice_free(XiceContext, ctx);
 }

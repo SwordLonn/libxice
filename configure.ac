@@ -103,6 +103,47 @@ AC_CHECK_LIB(rt, clock_gettime, [LIBRT="-lrt"], [LIBRT=""])
 AC_CHECK_FUNCS([poll])
 AC_SUBST(LIBRT)
 
+LIBUV_REQUIRED=1.10.0
+
+AC_ARG_ENABLE([libuv],
+        AS_HELP_STRING([--disable-libuv],[Disable libuv network support]),
+        [case "${enableval}" in
+           yes) WANT_LIBUV=yes ;;
+           no) WANT_LIBUV=no ;;
+           *) AC_MSG_ERROR(bad value ${enableval} for --enable-gupnp) ;;
+        esac],
+        WANT_LIBUV=test)
+
+LIBUV_PACKAGES_PUBLIC=""
+LIBUV_PACKAGES_PRIVATE="libuv >= $LIBUV_REQUIRED"
+LIBUV_PACKAGES="$LIBUV_PACKAGES_PUBLIC $LIBUV_PACKAGES_PRIVATE"
+
+HAVE_LIBUV=no
+if test "x$WANT_LIBUV" != "xno"; then
+    PKG_CHECK_MODULES(LIBUV, [$LIBUV_PACKAGES],
+     [ HAVE_LIBUV=yes ],
+     [ HAVE_LIBUV=no ])
+fi
+if test "x$WANT_LIBUV" = "xyes" && test "x$HAVE_LIBUV" = "xno"; then
+  AC_MSG_ERROR([Requested libuv, but it is not available])
+fi
+
+if test "x$HAVE_LIBUV" = "xyes"; then
+  AC_DEFINE(HAVE_LIBUV,,[Have libuv library])
+  LIBUV_ENABLED="true"
+else
+  LIBUV_PACKAGES_PUBLIC=""
+  LIBUV_PACKAGES_PRIVATE=""
+  LIBUV_PACKAGES=""
+fi
+
+AC_SUBST([LIBUV_PACKAGES_PUBLIC])
+AC_SUBST([LIBUV_PACKAGES_PRIVATE])
+AC_SUBST([LIBUV_PACKAGES])
+
+AC_SUBST([HAVE_LIBUV])
+AC_SUBST([LIBUV_ENABLED])
+
 PKG_CHECK_MODULES(GLIB, [dnl
 	glib-2.0 >= 2.13 dnl
 	gobject-2.0 >= 2.13 dnl

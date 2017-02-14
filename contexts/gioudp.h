@@ -44,7 +44,7 @@
 G_BEGIN_DECLS
 
 XiceSocket *
-xice_udp_bsd_socket_new (GMainContext* ctx, XiceAddress *addr);
+gio_udp_socket_create (GMainContext* ctx, XiceAddress *addr);
 
 G_END_DECLS
 

@@ -109,7 +109,7 @@ attach_socket (
 }
 
 XiceSocket *
-xice_udp_bsd_socket_new (GMainContext* ctx, XiceAddress *addr)
+gio_udp_socket_create(GMainContext* ctx, XiceAddress *addr)
 {
   struct sockaddr_storage name;
   XiceSocket *sock = g_slice_new0 (XiceSocket);

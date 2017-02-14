@@ -53,18 +53,18 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\glib\include\glib-2.0;..\..\glib\lib\glib-2.0\include;..\..\socket;.;..\..\;..\..\stun;..\..\random;..\..\agent;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\glib\include\glib-2.0;..\..\glib\lib\glib-2.0\include;..\..\socket;.;..\..\;..\..\stun;..\..\random;..\..\agent;..\..\libuv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HAVE_CONFIG_H;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>iphlpapi.lib;ws2_32.lib;glib-2.0.lib;gobject-2.0.lib;gio-2.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\glib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>iphlpapi.lib;ws2_32.lib;glib-2.0.lib;gobject-2.0.lib;gio-2.0.lib;libuv.lib;psapi.lib;userenv.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\glib\lib;..\..\libuv\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>libxice.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -78,17 +78,17 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\glib\include\glib-2.0;..\..\glib\lib\glib-2.0\include;..\..\socket;.;..\..\;..\..\stun;..\..\random;..\..\agent;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\glib\include\glib-2.0;..\..\glib\lib\glib-2.0\include;..\..\socket;.;..\..\;..\..\stun;..\..\random;..\..\agent;..\..\libuv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HAVE_CONFIG_H;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>iphlpapi.lib;ws2_32.lib;glib-2.0.lib;gobject-2.0.lib;gio-2.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\glib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>iphlpapi.lib;ws2_32.lib;glib-2.0.lib;gobject-2.0.lib;gio-2.0.lib;libuv.lib;psapi.lib;userenv.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\glib\lib;..\..\libuv\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>libxice.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -116,6 +116,10 @@
     <ClCompile Include="..\..\contexts\giotcp.c" />
     <ClCompile Include="..\..\contexts\giotimer.c" />
     <ClCompile Include="..\..\contexts\gioudp.c" />
+    <ClCompile Include="..\..\contexts\libuvcontext.c" />
+    <ClCompile Include="..\..\contexts\libuvtcp.c" />
+    <ClCompile Include="..\..\contexts\libuvtimer.c" />
+    <ClCompile Include="..\..\contexts\libuvudp.c" />
     <ClCompile Include="..\..\contexts\xicecontext.c" />
     <ClCompile Include="..\..\contexts\xicesocket.c" />
     <ClCompile Include="..\..\contexts\xicetimer.c" />
@@ -164,6 +168,10 @@
     <ClInclude Include="..\..\contexts\giotcp.h" />
     <ClInclude Include="..\..\contexts\giotimer.h" />
     <ClInclude Include="..\..\contexts\gioudp.h" />
+    <ClInclude Include="..\..\contexts\libuvcontext.h" />
+    <ClInclude Include="..\..\contexts\libuvtcp.h" />
+    <ClInclude Include="..\..\contexts\libuvtimer.h" />
+    <ClInclude Include="..\..\contexts\libuvudp.h" />
     <ClInclude Include="..\..\contexts\xicecontext.h" />
     <ClInclude Include="..\..\contexts\xicesocket.h" />
     <ClInclude Include="..\..\contexts\xicetimer.h" />

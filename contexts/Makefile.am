@@ -27,6 +27,14 @@ libcontexts_la_SOURCES = \
 	giotimer.h \
 	gioudp.c \
 	gioudp.h \
+	libuvcontext.c \
+	libuvcontext.h \
+	libuvtcp.c \
+	libuvtcp.h \
+	libuvudp.c \
+	libuvudp.h \
+	libuvtimer.c \
+	libuvtimer.h \
 	xicecontext.c \
 	xicecontext.h \
 	xicesocket.c \

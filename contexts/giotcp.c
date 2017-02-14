@@ -121,7 +121,7 @@ attach_socket(
 }
 
 XiceSocket *
-xice_tcp_bsd_socket_new (GMainContext *ctx, XiceAddress *addr)
+gio_tcp_socket_create(GMainContext *ctx, XiceAddress *addr)
 {
   struct sockaddr_storage name;
   XiceSocket *sock;

@@ -131,6 +131,18 @@
     <ClCompile Include="..\..\contexts\giotimer.c">
       <Filter>contexts</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\contexts\libuvcontext.c">
+      <Filter>contexts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\contexts\libuvtcp.c">
+      <Filter>contexts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\contexts\libuvtimer.c">
+      <Filter>contexts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\contexts\libuvudp.c">
+      <Filter>contexts</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\agent\address.h">
@@ -260,6 +272,18 @@
       <Filter>contexts</Filter>
     </ClInclude>
     <ClInclude Include="..\..\contexts\giotimer.h">
+      <Filter>contexts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\contexts\libuvcontext.h">
+      <Filter>contexts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\contexts\libuvtcp.h">
+      <Filter>contexts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\contexts\libuvtimer.h">
+      <Filter>contexts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\contexts\libuvudp.h">
       <Filter>contexts</Filter>
     </ClInclude>
   </ItemGroup>

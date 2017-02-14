@@ -47,12 +47,15 @@ XiceContext *xice_context_create(const char* type, gpointer ctx)
 	if (strcmp(type, "gio") == 0) {
 		return gio_context_create(ctx);
 	}
+
 #ifdef HAVE_LIBUV
 #include "libuvcontext.h"
 	if (strcmp(type, "libuv") == 0) {
 		return libuv_context_create(ctx);
 	}
 #endif
+
+#ifdef TODO
 #ifdef HAVE_LIBEVENT
 #include "libeventcontext.h"
 	if (strcmp(type, "libevent") == 0) {
@@ -61,9 +64,10 @@ XiceContext *xice_context_create(const char* type, gpointer ctx)
 #endif
 #ifdef HAVE_LIBEV
 #include "libevcontext.h"
-	if (strcmp(type, "libev") == 0) {
+	if (strcmp(type, "libev") == 0) { 
 		return libev_context_create(ctx);
 	}
+#endif
 #endif
 	return NULL;
 }
