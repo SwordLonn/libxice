@@ -43,7 +43,7 @@
 #endif
 
 #include "pseudossl.h"
-
+#include "agent/debug.h"
 #include <string.h>
 
 #ifndef G_OS_WIN32
@@ -87,10 +87,16 @@ static const gchar SSL_CLIENT_HANDSHAKE[] = {
   0x1f, 0x17, 0x0c, 0xa6, 0x2f, 0x00, 0x78, 0xfc,
   0x46, 0x55, 0x2e, 0xb1, 0x83, 0x39, 0xf1, 0xea};
 
+static gboolean read_callback(
+	XiceSocket *socket,
+	XiceSocketCondition condition,
+	gpointer data,
+	gchar *buf,
+	guint len,
+	XiceAddress *from);
 
 static void socket_close (XiceSocket *sock);
-static gint socket_recv (XiceSocket *sock, XiceAddress *from,
-    guint len, gchar *buf);
+
 static gboolean socket_send (XiceSocket *sock, const XiceAddress *to,
     guint len, const gchar *buf);
 static gboolean socket_is_reliable (XiceSocket *sock);
@@ -110,10 +116,10 @@ xice_pseudossl_socket_new (XiceSocket *base_socket)
   priv->handshaken = FALSE;
   priv->base_socket = base_socket;
 
+  xice_socket_set_callback(base_socket, read_callback, sock);
   sock->fileno = priv->base_socket->fileno;
   sock->addr = priv->base_socket->addr;
   sock->send = socket_send;
-  sock->recv = socket_recv;
   sock->is_reliable = socket_is_reliable;
   sock->close = socket_close;
   sock->get_fd = priv->base_socket->get_fd;
@@ -141,42 +147,53 @@ socket_close (XiceSocket *sock)
   g_slice_free(PseudoSSLPriv, sock->priv);
 }
 
+static gboolean read_callback(
+	XiceSocket *base_sock,
+	XiceSocketCondition condition,
+	gpointer data,
+	gchar *buf,
+	guint len,
+	XiceAddress *from) {
+	XiceSocket* sock = (XiceSocket*)data;
+	PseudoSSLPriv *priv = sock->priv;
+	if (len <= 0 || condition != XICE_SOCKET_READABLE) {
+		goto error;
+	}
 
-static gint
-socket_recv (XiceSocket *sock, XiceAddress *from, guint len, gchar *buf)
-{
-  PseudoSSLPriv *priv = sock->priv;
+	if (priv->handshaken) {
+		if (priv->base_socket && sock->callback) {
+			return sock->callback(sock, XICE_SOCKET_READABLE, sock->data, buf, len, from);
+		}
+		else {
+			return FALSE;
+		}
+	}
 
-  if (priv->handshaken) {
-    if (priv->base_socket)
-      return xice_socket_recv (priv->base_socket, from, len, buf);
-  } else {
-    gchar data[sizeof(SSL_SERVER_HANDSHAKE)];
-    gint ret  = -1;
-
-    if (priv->base_socket)
-      ret = xice_socket_recv (priv->base_socket, from, sizeof(data), data);
-
-    if (ret <= 0) {
-      return ret;
-    } else if ((guint) ret == sizeof(SSL_SERVER_HANDSHAKE) &&
-        memcmp(SSL_SERVER_HANDSHAKE, data, sizeof(SSL_SERVER_HANDSHAKE)) == 0) {
-      struct to_be_sent *tbs = NULL;
-      priv->handshaken = TRUE;
-      while ((tbs = g_queue_pop_head (&priv->send_queue))) {
-        xice_socket_send (priv->base_socket, &tbs->to, tbs->length, tbs->buf);
-        g_free (tbs->buf);
-        g_slice_free (struct to_be_sent, tbs);
-      }
-    } else {
-      if (priv->base_socket)
-        xice_socket_free (priv->base_socket);
-      priv->base_socket = NULL;
-
-      return -1;
-    }
-  }
-  return 0;
+	if (len >= sizeof(SSL_SERVER_HANDSHAKE) &&
+		memcmp(SSL_SERVER_HANDSHAKE, buf, sizeof(SSL_SERVER_HANDSHAKE)) == 0) {
+		//
+		struct to_be_sent *tbs = NULL;
+		priv->handshaken = TRUE;
+		while ((tbs = g_queue_pop_head(&priv->send_queue))) {
+			xice_socket_send(priv->base_socket, &tbs->to, tbs->length, tbs->buf);
+			g_free(tbs->buf);
+			g_slice_free(struct to_be_sent, tbs);
+		}
+		if (sock->callback && len > sizeof(SSL_SERVER_HANDSHAKE)) {
+			return sock->callback(sock, XICE_SOCKET_READABLE, sock->data, 
+				buf + sizeof(SSL_CLIENT_HANDSHAKE), len - sizeof(SSL_CLIENT_HANDSHAKE),
+				from);
+		}
+		return TRUE;
+	}
+error:
+	if (priv->base_socket)
+		xice_socket_free(priv->base_socket);
+	priv->base_socket = NULL;
+	if (condition == XICE_SOCKET_READABLE)
+		condition = XICE_SOCKET_ERROR;
+	sock->callback(sock, condition, sock->data, NULL, 0, NULL);
+	return FALSE;
 }
 
 static gboolean

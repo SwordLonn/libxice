@@ -65,6 +65,8 @@ typedef struct {
   gchar *username;
   gchar *password;
   GQueue send_queue;
+  gchar *recv_buf;
+  gint recv_len;
 } Socks5Priv;
 
 
@@ -74,10 +76,17 @@ struct to_be_sent {
   XiceAddress to;
 };
 
+static gboolean read_callback(
+	XiceSocket *socket,
+	XiceSocketCondition condition,
+	gpointer data,
+	gchar *buf,
+	guint len,
+	XiceAddress *from);
 
 static void socket_close (XiceSocket *sock);
-static gint socket_recv (XiceSocket *sock, XiceAddress *from,
-    guint len, gchar *buf);
+//static gint socket_recv (XiceSocket *sock, XiceAddress *from,
+//    guint len, gchar *buf);
 static gboolean socket_send (XiceSocket *sock, const XiceAddress *to,
     guint len, const gchar *buf);
 static gboolean socket_is_reliable (XiceSocket *sock);
@@ -103,10 +112,12 @@ xice_socks5_socket_new (XiceSocket *base_socket,
     priv->username = g_strdup (username);
     priv->password = g_strdup (password);
 
+	xice_socket_set_callback(base_socket, read_callback, sock);
+
     sock->fileno = priv->base_socket->fileno;
     sock->addr = priv->base_socket->addr;
     sock->send = socket_send;
-    sock->recv = socket_recv;
+    //sock->recv = socket_recv;
     sock->is_reliable = socket_is_reliable;
     sock->close = socket_close;
 	sock->get_fd = priv->base_socket->get_fd;
@@ -152,6 +163,9 @@ socket_close (XiceSocket *sock)
 
   if (priv->password)
     g_free (priv->password);
+  if (priv->recv_len > 0) {
+	  g_free(priv->recv_buf);
+  }
 
   g_queue_foreach (&priv->send_queue, (GFunc) free_to_be_sent, NULL);
   g_queue_clear (&priv->send_queue);
@@ -159,228 +173,217 @@ socket_close (XiceSocket *sock)
   g_slice_free(Socks5Priv, sock->priv);
 }
 
+static gboolean read_callback(
+	XiceSocket *base_socket,
+	XiceSocketCondition condition,
+	gpointer data,
+	gchar *buf,
+	guint len,
+	XiceAddress *from) {
+	XiceSocket* sock = (XiceSocket*)data;
+	Socks5Priv *priv = sock->priv;
+	if (len <= 0) {
+		return FALSE;
+	}
+	if (priv->state == SOCKS_STATE_CONNECTED) {
+		if (priv->base_socket && sock->callback) {
+			return sock->callback(sock, XICE_SOCKET_READABLE, sock->data, buf, len, &priv->addr);
+		} else {
+			return FALSE;
+		}
+	}
+	priv->recv_buf = g_realloc(priv->recv_buf, priv->recv_len + len);
+	memcpy(priv->recv_buf + priv->recv_len, buf, len);
+	priv->recv_len += len;
+next:
+	switch (priv->state) {
+	case SOCKS_STATE_CONNECTED:
+	{
+		guint read = priv->recv_len;
+		gboolean ret = FALSE;
+		if (sock->callback && priv->recv_len > 0) {
+			ret = sock->callback(sock, XICE_SOCKET_READABLE, sock->data, priv->recv_buf, read, from);
+		}
+		priv->recv_len -= read;
+		memmove(priv->recv_buf, priv->recv_buf + read, priv->recv_len);
+		priv->recv_buf = g_realloc(priv->recv_buf, priv->recv_len);
+		
+		return ret;
+	}
+	case SOCKS_STATE_INIT:
+	{
+		gchar data[2];
+		guint last = priv->recv_len;
 
-static gint
-socket_recv (XiceSocket *sock, XiceAddress *from, guint len, gchar *buf)
-{
-  Socks5Priv *priv = sock->priv;
+		xice_debug("Socks5 state Init");
 
-  if (from)
-    *from = priv->addr;
+		if (last < 2)
+			goto not_enough_data;
 
-  switch (priv->state) {
-    case SOCKS_STATE_CONNECTED:
-      if (priv->base_socket)
-        return xice_socket_recv (priv->base_socket, NULL, len, buf);
-      break;
-    case SOCKS_STATE_INIT:
-      {
-        gchar data[2];
-        gint ret  = -1;
+		data[0] = priv->recv_buf[0];
+		data[1] = priv->recv_buf[1];
+		priv->recv_len -= 2;
+		memmove(priv->recv_buf, priv->recv_buf + 2, priv->recv_len);
+		priv->recv_buf = g_realloc(priv->recv_buf, priv->recv_len);
 
-        xice_debug ("Socks5 state Init");
+		if (data[0] != 0x05) {
+			goto error;
+		}
+		if (data[1] != 0x02 && data[1] != 0x00)
+			goto error;
+		if (data[1] == 0x02) {
+			gchar msg[515];
+			gint len = 0;
+			if (!priv->username && !priv->password)
+				goto error;
 
-        if (priv->base_socket)
-          ret = xice_socket_recv (priv->base_socket, NULL, sizeof(data), data);
+			gint ulen = 0;
+			gint plen = 0;
 
-        if (ret <= 0) {
-          return ret;
-        } else if(ret == sizeof(data)) {
-          if (data[0] == 0x05) {
-            if (data[1] == 0x02) {
-              gchar msg[515];
-              gint len = 0;
+			if (priv->username)
+				ulen = strlen(priv->username);
+			if (ulen > 255) {
+				xice_debug("Socks5 username length > 255");
+				goto error;
+			}
 
-              if (priv->username || priv->password) {
-                gint ulen = 0;
-                gint plen = 0;
+			if (priv->password)
+				plen = strlen(priv->password);
+			if (plen > 255) {
+				xice_debug("Socks5 password length > 255");
+				goto error;
+			}
 
-                if (priv->username)
-                  ulen = strlen (priv->username);
-                if (ulen > 255) {
-                  xice_debug ("Socks5 username length > 255");
-                  goto error;
-                }
+			msg[len++] = 0x01; /* auth version */
+			msg[len++] = ulen; /* username length */
+			if (ulen > 0)
+				memcpy(msg + len, priv->username, ulen); /* Username */
+			len += ulen;
+			msg[len++] = plen; /* Password length */
+			if (plen > 0)
+				memcpy(msg + len, priv->password, plen); /* Password */
+			len += plen;
 
-                if (priv->password)
-                  plen  = strlen (priv->password);
-                if (plen > 255) {
-                  xice_debug ("Socks5 password length > 255");
-                  goto error;
-                }
+			xice_socket_send(priv->base_socket, NULL, len, msg);
+			priv->state = SOCKS_STATE_AUTH;
 
-                msg[len++] = 0x01; /* auth version */
-                msg[len++] = ulen; /* username length */
-                if (ulen > 0)
-                  memcpy (msg + len, priv->username, ulen); /* Username */
-                len += ulen;
-                msg[len++] = plen; /* Password length */
-                if (plen > 0)
-                  memcpy (msg + len, priv->password, plen); /* Password */
-                len += plen;
+			goto next;
+		}
+		else if (data[1] == 0x00) {
+			goto send_connect;
+		}
+	}
+	break;
+	case SOCKS_STATE_AUTH:
+	{
+		gchar* data = priv->recv_buf;
+		guint last = priv->recv_len;
 
-                xice_socket_send (priv->base_socket, NULL, len, msg);
-                priv->state = SOCKS_STATE_AUTH;
-              } else {
-                /* Authentication required but no auth info available */
-                goto error;
-              }
-            } else if (data[1] == 0x00) {
-              goto send_connect;
-            } else {
-              /* method not supported by socks server */
-              goto error;
-            }
-          } else {
-            /* invalid SOCKS server version */
-            goto error;
-          }
-        } else {
-          /* read error */
-          goto error;
-        }
-      }
-      break;
-    case SOCKS_STATE_AUTH:
-      {
-        gchar data[2];
-        gint ret  = -1;
+		xice_debug("Socks5 state auth");
+		
+		if (last < 2)
+			goto not_enough_data;
+		if (data[0] != 0x01 || data[1] != 0x00)
+			goto error;
+		priv->recv_len -= 2;
+		memmove(priv->recv_buf, priv->recv_buf + 2, priv->recv_len);
+		priv->recv_buf = g_realloc(priv->recv_buf, priv->recv_len);
+		
+		goto send_connect;
+	}
+	break;
+	case SOCKS_STATE_CONNECT:
+	{
+		gchar* data = priv->recv_buf;
+		guint last = priv->recv_len;
+		struct to_be_sent *tbs = NULL;
+		guint skip = 0;
+		if (last < 4)
+			goto not_enough_data;
+		if (data[0] != 0x05)
+			goto error;
+		if (data[1] != 0x00)
+			goto error;
+		if (data[2] != 0x00)
+			goto error;
+		if (data[3] != 0x01 && data[3] != 0x04)
+			goto error;
 
-        xice_debug ("Socks5 state auth");
-        if (priv->base_socket)
-          ret = xice_socket_recv (priv->base_socket, NULL, sizeof(data), data);
+		if (data[3] == 0x01 && last < 6 + 4)
+			goto not_enough_data;
 
-        if (ret <= 0) {
-          return ret;
-        } else if(ret == sizeof(data)) {
-          if (data[0] == 0x01 && data[1] == 0x00) {
-            /* Authenticated */
-            goto send_connect;
-          } else {
-            /* Authentication failed */
-            goto error;
-          }
-        }
-      }
-      break;
-    case SOCKS_STATE_CONNECT:
-      {
-        gchar data[22];
-        gint ret  = -1;
+		if (data[3] == 0x04 && last < 18 + 4)
+			goto not_enough_data;
+		
+		skip = data[3] == 0x01 ? 6 : 18;
+		
+		priv->recv_len -= skip;
+		memmove(priv->recv_buf, priv->recv_buf + 2, priv->recv_len);
+		priv->recv_buf = g_realloc(priv->recv_buf, priv->recv_len);
 
-        xice_debug ("Socks5 state connect");
-        if (priv->base_socket)
-          ret = xice_socket_recv (priv->base_socket, NULL, 4, data);
+		while ((tbs = g_queue_pop_head(&priv->send_queue))) {
+			xice_socket_send(priv->base_socket, &tbs->to,
+				tbs->length, tbs->buf);
+			g_free(tbs->buf);
+			g_slice_free(struct to_be_sent, tbs);
+		}
+		priv->state = SOCKS_STATE_CONNECTED;
+		goto next;
+	}
+	break;
+	default:
+		/* Unknown status */
+		goto error;
+	}
+not_enough_data:
+	return TRUE;
 
-        if (ret <= 0) {
-          return ret;
-        } else if(ret == 4) {
-          if (data[0] == 0x05) {
-            switch (data[1]) {
-              case 0x00:
-                if (data[2] == 0x00) {
-                  struct to_be_sent *tbs = NULL;
-                  switch (data[3]) {
-                    case 0x01: /* IPV4 bound address */
-                      ret = xice_socket_recv (priv->base_socket, NULL, 6, data);
-                      if (ret != 6) {
-                        /* Could not read server bound address */
-                        goto error;
-                      }
-                      break;
-                    case 0x04: /* IPV6 bound address */
-                      ret = xice_socket_recv (priv->base_socket, NULL, 18, data);
-                      if (ret != 18) {
-                        /* Could not read server bound address */
-                        goto error;
-                      }
-                      break;
-                    default:
-                      /* Unsupported address type */
-                      goto error;
-                  }
-                  while ((tbs = g_queue_pop_head (&priv->send_queue))) {
-                    xice_socket_send (priv->base_socket, &tbs->to,
-                        tbs->length, tbs->buf);
-                    g_free (tbs->buf);
-                    g_slice_free (struct to_be_sent, tbs);
-                  }
-                  priv->state = SOCKS_STATE_CONNECTED;
-                } else {
-                  /* Wrong reserved value */
-                  goto error;
-                }
-                break;
-              case 0x01: /* general SOCKS server failure */
-              case 0x02: /* connection not allowed by ruleset */
-              case 0x03: /* Network unreachable */
-              case 0x04: /* Host unreachable */
-              case 0x05: /* Connection refused */
-              case 0x06: /* TTL expired */
-              case 0x07: /* Command not supported */
-              case 0x08: /* Address type not supported */
-              default: /* Unknown error */
-                goto error;
-                break;
-            }
-          } else {
-            /* Wrong server version */
-            goto error;
-          }
-        } else {
-          /* Invalid data received */
-          goto error;
-        }
-      }
-      break;
-    default:
-      /* Unknown status */
-      goto error;
-  }
+send_connect:
+	{
+		gchar msg[22];
+		gint len = 0;
+		struct sockaddr_storage name;
+		xice_address_copy_to_sockaddr(&priv->addr, (struct sockaddr *)&name);
 
-  return 0;
+		msg[len++] = 0x05; /* SOCKS version */
+		msg[len++] = 0x01; /* connect command */
+		msg[len++] = 0x00; /* reserved */
+		if (name.ss_family == AF_INET) {
+			msg[len++] = 0x01; /* IPV4 address type */
+							   /* Address */
+			memcpy(msg + len, &((struct sockaddr_in *) &name)->sin_addr, 4);
+			len += 4;
+			/* Port */
+			memcpy(msg + len, &((struct sockaddr_in *) &name)->sin_port, 2);
+			len += 2;
+		}
+		else if (name.ss_family == AF_INET6) {
+			msg[len++] = 0x04; /* IPV6 address type */
+							   /* Address */
+			memcpy(msg + len, &((struct sockaddr_in6 *) &name)->sin6_addr, 16);
+			len += 16;
+			/* Port */
+			memcpy(msg + len, &((struct sockaddr_in6 *) &name)->sin6_port, 2);
+			len += 2;
+		}
 
- send_connect:
-  {
-    gchar msg[22];
-    gint len = 0;
-    struct sockaddr_storage name;
-    xice_address_copy_to_sockaddr(&priv->addr, (struct sockaddr *)&name);
+		xice_socket_send(priv->base_socket, NULL, len, msg);
+		priv->state = SOCKS_STATE_CONNECT;
 
-    msg[len++] = 0x05; /* SOCKS version */
-    msg[len++] = 0x01; /* connect command */
-    msg[len++] = 0x00; /* reserved */
-    if (name.ss_family == AF_INET) {
-      msg[len++] = 0x01; /* IPV4 address type */
-      /* Address */
-      memcpy (msg + len, &((struct sockaddr_in *) &name)->sin_addr, 4);
-      len += 4;
-      /* Port */
-      memcpy (msg + len, &((struct sockaddr_in *) &name)->sin_port, 2);
-      len += 2;
-    } else if (name.ss_family == AF_INET6) {
-      msg[len++] = 0x04; /* IPV6 address type */
-      /* Address */
-      memcpy (msg + len, &((struct sockaddr_in6 *) &name)->sin6_addr, 16);
-      len += 16;
-      /* Port */
-      memcpy (msg + len, &((struct sockaddr_in6 *) &name)->sin6_port, 2);
-      len += 2;
-    }
+		goto next;
+	}
+error:
+	xice_debug("Socks5 error");
+	if (priv->base_socket)
+		xice_socket_free(priv->base_socket);
+	priv->base_socket = NULL;
+	priv->state = SOCKS_STATE_ERROR;
+	if (condition == XICE_SOCKET_READABLE)
+		condition = XICE_SOCKET_ERROR;
+	sock->callback(sock, condition, sock->data, NULL, 0, NULL);
 
-    xice_socket_send (priv->base_socket, NULL, len, msg);
-    priv->state = SOCKS_STATE_CONNECT;
+	return FALSE;
 
-    return 0;
-  }
- error:
-  xice_debug ("Socks5 error");
-  if (priv->base_socket)
-    xice_socket_free (priv->base_socket);
-  priv->base_socket = NULL;
-  priv->state = SOCKS_STATE_ERROR;
-
-  return -1;
 }
 
 static gboolean

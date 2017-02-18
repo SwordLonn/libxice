@@ -62,9 +62,16 @@ typedef struct {
 
 #define MAX_UDP_MESSAGE_SIZE 65535
 
+static gboolean read_callback(
+	XiceSocket *socket,
+	XiceSocketCondition condition,
+	gpointer data,
+	gchar *buf,
+	guint len,
+	XiceAddress *from);
+
 static void socket_close (XiceSocket *sock);
-static gint socket_recv (XiceSocket *sock, XiceAddress *from,
-    guint len, gchar *buf);
+
 static gboolean socket_send (XiceSocket *sock, const XiceAddress *to,
     guint len, const gchar *buf);
 static gboolean socket_is_reliable (XiceSocket *sock);
@@ -79,11 +86,11 @@ xice_tcp_turn_socket_new (XiceSocket *base_socket,
 
   priv->compatibility = compatibility;
   priv->base_socket = base_socket;
-
+  xice_socket_set_callback(base_socket, read_callback, sock);
   sock->fileno = priv->base_socket->fileno;
   sock->addr = priv->base_socket->addr;
   sock->send = socket_send;
-  sock->recv = socket_recv;
+//  sock->recv = socket_recv;
   sock->is_reliable = socket_is_reliable;
   sock->close = socket_close;
   sock->get_fd = priv->base_socket->get_fd;
@@ -103,80 +110,119 @@ socket_close (XiceSocket *sock)
   g_slice_free(TurnTcpPriv, sock->priv);
 }
 
-
-static gint
-socket_recv (XiceSocket *sock, XiceAddress *from, guint len, gchar *buf)
-{
+static gboolean read_callback(
+	XiceSocket *socket,
+	XiceSocketCondition condition,
+	gpointer data,
+	gchar *buf,
+	guint len,
+	XiceAddress *from) {
+  XiceSocket* sock = data;
   TurnTcpPriv *priv = sock->priv;
-  int ret;
   guint padlen;
-
-  if (priv->expecting_len == 0) {
-    guint headerlen = 0;
-
-    if (priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_DRAFT9 ||
-        priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_RFC5766)
-      headerlen = 4;
-    else if (priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_GOOGLE)
-      headerlen = 2;
-    else
-      return -1;
-
-    ret = xice_socket_recv (priv->base_socket, from,
-        headerlen - priv->recv_buf_len, priv->recv_buf + priv->recv_buf_len);
-    if (ret < 0)
-        return ret;
-
-    priv->recv_buf_len += ret;
-
-    if (priv->recv_buf_len < headerlen)
-      return 0;
-
-    if (priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_DRAFT9 ||
-        priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_RFC5766) {
-      guint16 magic = ntohs (*(guint16*)priv->recv_buf);
-      guint16 packetlen = ntohs (*(guint16*)(priv->recv_buf + 2));
-
-      if (magic < 0x4000) {
-        /* Its STUN */
-        priv->expecting_len = 20 + packetlen;
-      } else {
-        /* Channel data */
-        priv->expecting_len = 4 + packetlen;
-      }
-    }
-    else if (priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_GOOGLE) {
-      guint len = ntohs (*(guint16*)priv->recv_buf);
-      priv->expecting_len = len;
-      priv->recv_buf_len = 0;
-    }
-  }
+  guint headerlen = 0;
+  guint copy = 0;
 
   if (priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_DRAFT9 ||
-      priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_RFC5766)
-    padlen = (priv->expecting_len % 4) ?  4 - (priv->expecting_len % 4) : 0;
+	  priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_RFC5766)
+	  headerlen = 4;
+  else if (priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_GOOGLE)
+	  headerlen = 2;
   else
-    padlen = 0;
-
-  ret = xice_socket_recv (priv->base_socket, from,
-      priv->expecting_len + padlen - priv->recv_buf_len,
-      priv->recv_buf + priv->recv_buf_len);
-
-  if (ret < 0)
-      return ret;
-
-  priv->recv_buf_len += ret;
-
-  if (priv->recv_buf_len == priv->expecting_len + padlen) {
-    guint copy_len = MIN (len, priv->recv_buf_len);
-    memcpy (buf, priv->recv_buf, copy_len);
-    priv->expecting_len = 0;
-    priv->recv_buf_len = 0;
-
-    return copy_len;
+	  return FALSE;
+  //do our best to reduse memory copy.
+  if (len < 0 || condition != XICE_SOCKET_READABLE) {
+	  return sock->callback(sock, condition, sock->data, buf, len, from);
+  }
+next:
+  if (len == 0) {
+	  return TRUE;
   }
 
-  return 0;
+  if (priv->expecting_len == 0 && priv->recv_buf_len == 0) {
+	if (len < headerlen) {
+		memcpy(priv->recv_buf, buf, len);
+		priv->recv_buf_len = len;
+		return TRUE;
+	}
+    if (priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_DRAFT9 ||
+        priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_RFC5766) {
+      guint16 magic = ntohs (*(guint16*)buf);
+      guint16 packetlen = ntohs (*(guint16*)(buf + 2));
+	  priv->expecting_len = (magic < 0x4000 ? 20 : 4) + packetlen;
+	  padlen = (priv->expecting_len % 4) ? 4 - (priv->expecting_len % 4) : 0;
+    }
+    else if (priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_GOOGLE) {
+      guint len = ntohs (*(guint16*)buf);
+      priv->expecting_len = len;
+	  padlen = 0;
+    }
+
+	if (len >= priv->expecting_len + padlen) {
+		if (sock->callback) {
+			sock->callback(sock, XICE_SOCKET_READABLE, sock->data, buf, priv->expecting_len + padlen, from);
+		}
+		buf += priv->expecting_len + padlen;
+		len -= priv->expecting_len + padlen;
+		priv->recv_buf_len = 0;
+		priv->expecting_len = 0;
+		goto next;
+	}
+	else {
+		priv->expecting_len = priv->expecting_len + padlen - len;
+		memcpy(priv->recv_buf, buf, len);
+		priv->recv_buf_len = len;
+		return TRUE;
+	}
+  }
+  else {
+	  if (priv->expecting_len == 0) {
+		  if (len + priv->recv_buf_len < headerlen) {
+			  memcpy(priv->recv_buf + priv->recv_buf_len, buf, len);
+			  priv->recv_buf_len += len;
+			  return TRUE;
+		  }
+		  if (priv->recv_buf_len < headerlen) {
+			  memcpy(priv->recv_buf + priv->recv_buf_len, buf, headerlen - priv->recv_buf_len);
+			  buf += headerlen - priv->recv_buf_len;
+			  len -= headerlen - priv->recv_buf_len;
+			  priv->recv_buf_len = headerlen;
+		  }
+		  if (priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_DRAFT9 ||
+			  priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_RFC5766) {
+			  guint16 magic = ntohs(*(guint16*)priv->recv_buf);
+			  guint16 packetlen = ntohs(*(guint16*)(priv->recv_buf + 2));
+			  priv->expecting_len = (magic < 0x4000 ? 20 : 4) + packetlen;
+			  padlen = (priv->expecting_len % 4) ? 4 - (priv->expecting_len % 4) : 0;
+		  }
+		  else if (priv->compatibility == XICE_TURN_SOCKET_COMPATIBILITY_GOOGLE) {
+			  guint len = ntohs(*(guint16*)priv->recv_buf);
+			  priv->expecting_len = len;
+			  padlen = 0;
+		  }			  
+	  }
+	  copy = min(len, padlen + priv->expecting_len - priv->recv_buf_len);
+	  memcpy(priv->recv_buf + priv->recv_buf_len, buf, copy);
+	  buf += copy;
+	  len -= copy;
+	  priv->recv_buf_len += copy;
+
+	  if (priv->recv_buf_len >= padlen + priv->expecting_len) {
+		  if (sock->callback) {
+			  sock->callback(sock, XICE_SOCKET_READABLE, sock->data, priv->recv_buf, priv->expecting_len + padlen, from);
+		  }
+		  memmove(priv->recv_buf, priv->recv_buf + priv->expecting_len + padlen, priv->recv_buf_len - priv->expecting_len - padlen);
+		  priv->recv_buf_len -= priv->expecting_len + padlen;
+		  priv->expecting_len = 0;
+		  goto next;
+	  }
+	  else {
+		  priv->expecting_len -= priv->recv_buf_len - padlen;
+		  return TRUE;
+	  }
+  }
+
+  return TRUE;
 }
 
 static gboolean

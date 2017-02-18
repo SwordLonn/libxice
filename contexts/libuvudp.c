@@ -4,16 +4,27 @@
 #include "libuvudp.h"
 #include "agent/debug.h"
 
+#define BUFFER_SIZE (4096)
+
+
+typedef struct _UvSendData
+{
+	XiceSocket*    socket;
+	uv_udp_send_t req;
+	struct _UvSendData *next;
+	uint8_t buffer[BUFFER_SIZE];
+}UvSendData;
+
 typedef struct _LibuvUdp {
 	uv_loop_t* loop;
 	uv_udp_t* handle;
 	XiceAddress xiceaddr;
 	struct sockaddr_storage addr;
+	UvSendData *list;
 }LibuvUdp;
 
 static void socket_close(XiceSocket *sock);
-static gint socket_recv(XiceSocket *sock, XiceAddress *from,
-	guint len, gchar *buf);
+
 static gboolean socket_send(XiceSocket *sock, const XiceAddress *to,
 	guint len, const gchar *buf);
 static gboolean socket_is_reliable(XiceSocket *sock);
@@ -34,13 +45,12 @@ XiceSocket* libuv_udp_socket_create(uv_loop_t* loop, XiceAddress* addr) {
 	uv->loop = loop;
 	uv->handle = g_slice_new0(uv_udp_t);
 	uv->handle->data = sock;
-
+	uv->list = NULL;
 	uv_udp_init(uv->loop, uv->handle);
 
 	sock->priv = uv;
 	sock->fileno = (gpointer)uv->handle;
 	sock->send = socket_send;
-	sock->recv = socket_recv;
 	sock->is_reliable = socket_is_reliable;
 	sock->close = socket_close;
 	sock->get_fd = socket_get_fd;
@@ -68,26 +78,21 @@ static int socket_get_fd(XiceSocket *sock) {
 
 static void socket_close(XiceSocket *sock) {
 	LibuvUdp* udp = sock->priv;
+	UvSendData *it = udp->list;
+	UvSendData *tmp;
 
 	uv_udp_recv_stop(udp->handle);
 
 	uv_close((uv_handle_t*)udp->handle, on_close_callback);
 
+	while (it != NULL) {
+		tmp = it->next;
+		g_free(it);
+		it = tmp;
+	}
 	g_slice_free(LibuvUdp, udp);
 
 }
-
-static gint socket_recv(XiceSocket *sock, XiceAddress *from,
-	guint len, gchar *buf) {
-	//TODO perhaps we have to turn to another io mode with callback carried datas
-}
-
-typedef struct _UvSendData
-{
-	XiceSocket*    socket;
-	uv_udp_send_t req;
-	uint8_t       store[1];
-}UvSendData;
 
 static gboolean socket_send(XiceSocket *sock, const XiceAddress *to,
 	guint len, const gchar *buf) {
@@ -95,6 +100,8 @@ static gboolean socket_send(XiceSocket *sock, const XiceAddress *to,
 	LibuvUdp *udp = sock->priv;
 	uv_buf_t buffer;
 	int err;
+	g_assert(len <= BUFFER_SIZE);
+
 	if(!xice_address_is_valid(&udp->xiceaddr) ||
 		!xice_address_equal(&udp->xiceaddr, to)) {
 		udp->xiceaddr = *to;
@@ -106,7 +113,7 @@ static gboolean socket_send(XiceSocket *sock, const XiceAddress *to,
 	if (sent == (int)len) {
 		return TRUE;
 	}
-	else if (sent >= 0) {
+	else if (sent < 0) {
 		xice_debug("datagram truncated (juts %d of %d bytes were sent)", sent, len);
 		return FALSE;
 	}
@@ -114,14 +121,25 @@ static gboolean socket_send(XiceSocket *sock, const XiceAddress *to,
 		xice_debug("uv_udp_try_send() failed : %s", uv_strerror(sent));
 		return FALSE;
 	}
-	UvSendData* send_data = (UvSendData*)g_alloca(sizeof(UvSendData) + len);
-	send_data->socket = sock;
-	send_data->req.data = (gpointer)send_data;
-	buffer = uv_buf_init((char*)send_data->store, len);
+
+	UvSendData* send_data = NULL;
+	if (udp->list == NULL) {
+		send_data = (UvSendData*)g_alloca(sizeof(UvSendData));
+		send_data->socket = sock;
+		send_data->req.data = (gpointer)send_data;
+	}
+	else {
+		send_data = udp->list;
+		udp->list = send_data->next;
+		send_data->next = NULL;
+	}
+	memcpy(send_data->buffer, buf, len);
+	buffer = uv_buf_init((char*)send_data->buffer, len);
 	err = uv_udp_send(&send_data->req, udp->handle, &buffer, 1, (struct sockaddr *)&udp->addr, on_send_callback);
 	if (err) {
 		xice_debug("uv_udp_send() failed: %s", uv_strerror(err));
-		g_free(send_data);
+		send_data->next = udp->list;
+		udp->list = send_data;
 		return FALSE;
 	}
 	return TRUE;
@@ -141,18 +159,35 @@ static void on_alloc_callback(uv_handle_t* handle, size_t suggested_size, uv_buf
 
 static void on_recv_callback(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf,
 	const struct sockaddr* addr, unsigned int flags) {
+	XiceSocket *sock = handle->data;
+	XiceAddress xaddr;
+
+	if (nread < 0) {
+		xice_debug("unexpect error.");
+		sock->callback(sock, XICE_SOCKET_ERROR, sock->data, NULL, 0, NULL);
+		return;
+	}
+	if (nread == 0) {
+		return;
+	}
+
+	xice_address_set_from_sockaddr(&xaddr, addr);
+	sock->callback(sock, XICE_SOCKET_READABLE, sock->data, buf->base, buf->len, &xaddr);
 
 }
 
 static void on_send_callback(uv_udp_send_t* req, int status) {
 	UvSendData* send_data = (UvSendData*)(req->data);
 	XiceSocket* socket = send_data->socket;
+	LibuvUdp* udp = socket->priv;
 
-	// Delete the UvSendData struct (which includes the uv_req_t and the store char[]).
-	g_free(send_data);
-	// Just notify the UdpSocket when error.
-	//if (status)
-	//	socket->onUvSendError(status);
+	send_data->next = udp->list;
+	udp->list = send_data;
+
+	if (status) {
+		xice_debug("libuvudp send failed : %d", status);
+		socket->callback(socket, XICE_SOCKET_ERROR, socket->data, NULL, 0, NULL);
+	}
 }
 
 static void on_close_callback(uv_handle_t* handle) {

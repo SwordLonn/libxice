@@ -57,36 +57,37 @@ typedef enum _XiceSocketCondition XiceSocketCondition;
 typedef gboolean (*XiceSocketCallbackFunc)(
 	XiceSocket *socket,
 	XiceSocketCondition condition,
-	gpointer data);
+	gpointer data,
+	gchar *buf,
+	guint len,
+	XiceAddress *from);
 
 enum _XiceSocketCondition
 {
 	XICE_SOCKET_ERROR,
 	XICE_SOCKET_CLOSE,
-	XICE_SOCKET_READABLE,
-	XICE_SOCKET_WRITEABLE
+	XICE_SOCKET_READABLE
 };
 
 struct _XiceSocket
 {
   XiceAddress addr;
   gpointer *fileno;
-  gint (*recv) (XiceSocket *sock, XiceAddress *from, guint len,
-      gchar *buf);
   gboolean (*send) (XiceSocket *sock, const XiceAddress *to, guint len,
       const gchar *buf);
   gboolean (*is_reliable) (XiceSocket *sock);
   void (*close) (XiceSocket *sock);
   int (*get_fd)(XiceSocket *sock);
-
-  void *priv;
+  
+  //singal
   XiceSocketCallbackFunc callback;
   gpointer data;
+  
+  //private
+  void *priv;
 };
 
 G_GNUC_WARN_UNUSED_RESULT
-gint
-xice_socket_recv (XiceSocket *sock, XiceAddress *from, guint len, gchar *buf);
 
 gboolean
 xice_socket_send (XiceSocket *sock, const XiceAddress *to,

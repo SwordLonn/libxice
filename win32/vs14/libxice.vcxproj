@@ -97,7 +97,7 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PreBuildEvent>
-      <Command>../dogenmarshal.cmd</Command>
+      <Command>cd ../ &amp;&amp; dogenmarshal.cmd</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

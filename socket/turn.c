@@ -119,9 +119,16 @@ typedef struct {
   guint data_len;
 } SendData;
 
+static gboolean read_callback(
+	XiceSocket *socket,
+	XiceSocketCondition condition,
+	gpointer data,
+	gchar *buf,
+	guint len,
+	XiceAddress *from);
+
 static void socket_close (XiceSocket *sock);
-static gint socket_recv (XiceSocket *sock, XiceAddress *from,
-    guint len, gchar *buf);
+
 static gboolean socket_send (XiceSocket *sock, const XiceAddress *to,
     guint len, const gchar *buf);
 static gboolean socket_is_reliable (XiceSocket *sock);
@@ -234,10 +241,10 @@ xice_turn_socket_new (XiceContext *ctx, XiceAddress *addr,
           (GEqualFunc) xice_address_equal,
           (GDestroyNotify) xice_address_free,
           priv_send_data_queue_destroy);
+  xice_socket_set_callback(base_socket, read_callback, sock);
   sock->addr = *addr;
   sock->fileno = base_socket->fileno;
   sock->send = socket_send;
-  sock->recv = socket_recv;
   sock->is_reliable = socket_is_reliable;
   sock->close = socket_close;
   sock->priv = (void *) priv;
@@ -269,24 +276,19 @@ socket_close (XiceSocket *sock)
   g_list_free (priv->pending_bindings);
 
   if (priv->tick_source_channel_bind != NULL) {
-    xice_timer_destroy (priv->tick_source_channel_bind);
-    //xice_timer_unref (priv->tick_source_channel_bind);
+    xice_timer_destroy (priv->tick_source_channel_bind);;
     priv->tick_source_channel_bind = NULL;
   }
 
   if (priv->tick_source_create_permission != NULL) {
     xice_timer_destroy (priv->tick_source_create_permission);
-    //xice_timer_unref (priv->tick_source_create_permission);
     priv->tick_source_create_permission = NULL;
   }
 
 
   for (i = g_queue_peek_head_link (priv->send_requests); i; i = i->next) {
     SendRequest *r = i->data;
-    //g_source_destroy (r->source);
-    //g_source_unref (r->source);
 	xice_timer_destroy(r->source);
-	//xice_timer_unref(r->source);
 	r->source = NULL;
 
     stun_agent_forget_transaction (&priv->agent, r->id);
@@ -305,9 +307,6 @@ socket_close (XiceSocket *sock)
 	  xice_timer_destroy(priv->permission_timeout_source);
 	  priv->permission_timeout_source = NULL;
   }
-    //xice_remove_timeout(priv->ctx, priv->permission_timeout_source);
-  //if (priv->ctx)
-    //xice_context_unref (priv->ctx);
 
   g_free (priv->current_binding);
   g_free (priv->current_binding_msg);
@@ -318,26 +317,27 @@ socket_close (XiceSocket *sock)
   g_free (priv);
 }
 
-static gint
-socket_recv (XiceSocket *sock, XiceAddress *from, guint len, gchar *buf)
-{
-  TurnPriv *priv = (TurnPriv *) sock->priv;
-  uint8_t recv_buf[STUN_MAX_MESSAGE_SIZE];
-  gint recv_len;
-  XiceAddress recv_from;
-  XiceSocket *dummy;
+static gboolean read_callback(
+	XiceSocket *socket,
+	XiceSocketCondition condition,
+	gpointer data,
+	gchar *buf,
+	guint len,
+	XiceAddress *from) {
+	XiceSocket* sock = (XiceSocket*)data;
+	TurnPriv* priv = (TurnPriv*)sock->priv;
+	gint recv_len = len;
+	uint8_t* recv_buf = buf;
+	XiceSocket *dummy;
+	XiceAddress recv_from;
 
-  xice_debug ("received message on TURN socket");
+	xice_debug("received message on TURN socket");
+	if (recv_len < 0 || condition != XICE_SOCKET_READABLE)
+		return sock->callback(sock, condition, sock->data, buf, len, from);
+	if (recv_len == 0)
+		return TRUE;
 
-  recv_len = xice_socket_recv (priv->base_socket, &recv_from,
-      sizeof(recv_buf), (gchar *) recv_buf);
-
-  if (recv_len > 0)
-    return xice_turn_socket_parse_recv (sock, &dummy, from, len, buf,
-        &recv_from, (gchar *) recv_buf,
-        (guint) recv_len);
-  else
-    return recv_len;
+	return xice_turn_socket_parse_recv(sock, &dummy, from, len, buf, &recv_from, recv_buf, recv_len) < 0;
 }
 
 static XiceTimer*
@@ -631,21 +631,11 @@ priv_forget_send_request (XiceTimer* timer, gpointer pointer)
 
   agent_lock ();
 
-  if (g_source_is_destroyed (g_main_current_source ())) {
-    xice_debug ("Source was destroyed. "
-        "Avoided race condition in turn.c:priv_forget_send_request");
-    agent_unlock ();
-    return FALSE;
-  }
-
   stun_agent_forget_transaction (&req->priv->agent, req->id);
 
   g_queue_remove (req->priv->send_requests, req);
 
-  //g_source_destroy (req->source);
-  //g_source_unref (req->source);
   xice_timer_destroy(req->source);
-  //xice_timer_unref(req->source);
 
   req->source = NULL;
 
@@ -727,20 +717,11 @@ priv_binding_timeout (XiceTimer* timer, gpointer data)
 {
   TurnPriv *priv = (TurnPriv *) data;
   GList *i;
-  //GSource *source = NULL;
 
   xice_debug ("Permission is about to timeout, sending binding renewal");
 
   agent_lock ();
-  /*
-  source = g_main_current_source ();
-  if (g_source_is_destroyed (source)) {
-    xice_debug ("Source was destroyed. "
-        "Avoided race condition in turn.c:priv_binding_timeout");
-    agent_unlock ();
-    return FALSE;
-  }
-  */
+
   /* find current binding and mark it for renewal */
   for (i = priv->channels ; i; i = i->next) {
     ChannelBinding *b = i->data;
@@ -812,11 +793,7 @@ xice_turn_socket_parse_recv (XiceSocket *sock, XiceSocket **from_sock,
           }
 
           if (req) {
-            //g_source_destroy (req->source);
-            //g_source_unref (req->source);
 			xice_timer_destroy(req->source);
-			//xice_timer_unref(req->source);
-
             req->source = NULL;
 
             g_queue_remove (priv->send_requests, req);
@@ -1078,9 +1055,13 @@ xice_turn_socket_parse_recv (XiceSocket *sock, XiceSocket **from_sock,
 
         xice_address_set_from_sockaddr (from, (struct sockaddr *) &sa);
 
-        *from_sock = sock;
-        memmove (buf, data, len > data_len ? data_len : len);
-        return len > data_len ? data_len : len;
+        //*from_sock = sock;
+        //memmove (buf, data, len > data_len ? data_len : len);
+        //return len > data_len ? data_len : len;
+		if (sock->callback) {
+			sock->callback(sock, XICE_SOCKET_READABLE, sock->data, data, min(len, data_len), from);
+		}
+		return 0;
       } else {
         goto recv;
       }
@@ -1111,9 +1092,12 @@ xice_turn_socket_parse_recv (XiceSocket *sock, XiceSocket **from_sock,
     *from = *recv_from;
   }
 
-  memmove (buf, recv_buf, len > recv_len ? recv_len : len);
-  return len > recv_len ? recv_len : len;
-
+  //memmove (buf, recv_buf, len > recv_len ? recv_len : len);
+  //return len > recv_len ? recv_len : len;
+  if (sock->callback) {
+	  sock->callback(sock, XICE_SOCKET_READABLE, sock->data, recv_buf, min(len, recv_len), from);
+  }
+  return 0;
  msn_google_lock:
 
   if (priv->current_binding) {
@@ -1276,17 +1260,10 @@ priv_retransmissions_tick (XiceTimer* timer, gpointer pointer)
   TurnPriv *priv = pointer;
 
   agent_lock ();
-  if (g_source_is_destroyed (g_main_current_source ())) {
-    xice_debug ("Source was destroyed. "
-        "Avoided race condition in turn.c:priv_retransmissions_tick");
-    agent_unlock ();
-    return FALSE;
-  }
 
   if (priv_retransmissions_tick_unlocked (priv) == FALSE) {
     if (priv->tick_source_channel_bind != NULL) {
       xice_timer_destroy (priv->tick_source_channel_bind);
-      //xice_timer_unref (priv->tick_source_channel_bind);
       priv->tick_source_channel_bind = NULL;
     }
   }
@@ -1302,12 +1279,6 @@ priv_retransmissions_create_permission_tick (XiceTimer* timer, gpointer pointer)
   GList *i, *next;
 
   agent_lock ();
-  if (g_source_is_destroyed (g_main_current_source ())) {
-    xice_debug ("Source was destroyed. Avoided race condition in "
-                "turn.c:priv_retransmissions_create_permission_tick");
-    agent_unlock ();
-    return FALSE;
-  }
 
   for (i = priv->pending_permissions; i; i = next) {
     next = i->next;
@@ -1315,7 +1286,6 @@ priv_retransmissions_create_permission_tick (XiceTimer* timer, gpointer pointer)
     if (!priv_retransmissions_create_permission_tick_unlocked (priv, i)) {
       if (priv->tick_source_create_permission != NULL) {
         xice_timer_destroy (priv->tick_source_create_permission);
-        //xice_timer_unref (priv->tick_source_create_permission);
         priv->tick_source_create_permission = NULL;
       }
     }
@@ -1332,10 +1302,7 @@ priv_schedule_tick (TurnPriv *priv)
   TURNMessage *current_create_permission_msg;
 
   if (priv->tick_source_channel_bind != NULL) {
-    //g_source_destroy (priv->tick_source_channel_bind);
-    //g_source_unref (priv->tick_source_channel_bind);
 	xice_timer_destroy(priv->tick_source_channel_bind);
-	//xice_timer_unref(priv->tick_source_channel_bind);
     priv->tick_source_channel_bind = NULL;
   }
 

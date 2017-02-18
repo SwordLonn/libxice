@@ -98,10 +98,7 @@ void discovery_free (XiceAgent *agent)
   agent->discovery_unsched_items = 0;
 
   if (agent->discovery_timer_source != NULL) {
-    //g_source_destroy (agent->discovery_timer_source);
-    //g_source_unref (agent->discovery_timer_source);
 	xice_timer_destroy(agent->discovery_timer_source);
-	//xice_timer_unref(agent->discovery_timer_source);
 	agent->discovery_timer_source = NULL;
   }
 }
@@ -153,12 +150,10 @@ void refresh_free_item (gpointer data, gpointer user_data)
 
   if (cand->timer_source != NULL) {
     xice_timer_destroy (cand->timer_source);
-    //xice_timer_unref (cand->timer_source);
     cand->timer_source = NULL;
   }
   if (cand->tick_source != NULL) {
     xice_timer_destroy (cand->tick_source);
-    //xice_timer_unref (cand->tick_source);
     cand->tick_source = NULL;
   }
 
@@ -1019,20 +1014,11 @@ static gboolean priv_discovery_tick (XiceTimer* timer, gpointer pointer)
   gboolean ret;
 
   agent_lock();
-  if (g_source_is_destroyed (g_main_current_source ())) {
-    xice_debug ("Source was destroyed. "
-        "Avoided race condition in priv_discovery_tick");
-    agent_unlock ();
-    return FALSE;
-  }
 
   ret = priv_discovery_tick_unlocked (pointer);
   if (ret == FALSE) {
     if (agent->discovery_timer_source != NULL) {
-      //g_source_destroy (agent->discovery_timer_source);
-      //g_source_unref (agent->discovery_timer_source);
 	  xice_timer_destroy(agent->discovery_timer_source);
-	  //xice_timer_unref(agent->discovery_timer_source);
 	  agent->discovery_timer_source = NULL;
     }
   }

@@ -19,7 +19,8 @@ XiceTimer* gio_timer_create(GMainContext* ctx, guint interval,
 
 	XiceTimer* timer = g_slice_new0(XiceTimer);
 	XiceTimerGIO* tgio = g_slice_new0(XiceTimerGIO);
-	tgio->context = ctx;
+
+	tgio->context = g_main_context_ref(ctx);
 	timer->interval = interval;
 	timer->func = function;
 	timer->data = data;
@@ -80,8 +81,11 @@ static void gio_timer_destroy(XiceTimer* timer)
 	gio = timer->priv;
 	if (gio != NULL) {
 		gio_timer_stop(timer);
+		g_main_context_unref(gio->context);
 		g_slice_free(XiceTimerGIO, gio);
+		//g_free(gio);
 		timer->priv = NULL;
 		g_slice_free(XiceTimer, timer);
+		//g_free(timer);
 	}
 }

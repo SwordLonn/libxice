@@ -17,5 +17,5 @@ void xice_timer_stop(XiceTimer* timer) {
 void xice_timer_destroy(XiceTimer* timer) {
 	g_assert(timer != NULL && timer->destroy != NULL);
 	timer->destroy(timer);
-	g_slice_free(XiceTimer, timer);
+	//g_slice_free(XiceTimer, timer);  //lost a fucking saturday!!!
 }

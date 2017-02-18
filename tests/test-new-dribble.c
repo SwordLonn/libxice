@@ -677,8 +677,8 @@ int main(void)
   g_object_set (G_OBJECT (lagent), "controlling-mode", TRUE, NULL);
   g_object_set (G_OBJECT (ragent), "controlling-mode", FALSE, NULL);
 
-  g_object_set (G_OBJECT (lagent), "upnp", USE_UPNP, NULL);
-  g_object_set (G_OBJECT (ragent), "upnp", USE_UPNP, NULL);
+//  g_object_set (G_OBJECT (lagent), "upnp", USE_UPNP, NULL);
+//  g_object_set (G_OBJECT (ragent), "upnp", USE_UPNP, NULL);
 
   g_object_set (G_OBJECT (lagent), "stun-server", "127.0.0.1", NULL);
   g_object_set (G_OBJECT (lagent), "stun-server-port", IPPORT_STUN, NULL);

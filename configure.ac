@@ -110,7 +110,7 @@ AC_ARG_ENABLE([libuv],
         [case "${enableval}" in
            yes) WANT_LIBUV=yes ;;
            no) WANT_LIBUV=no ;;
-           *) AC_MSG_ERROR(bad value ${enableval} for --enable-gupnp) ;;
+           *) AC_MSG_ERROR(bad value ${enableval} for --enable-libuv) ;;
         esac],
         WANT_LIBUV=test)
 

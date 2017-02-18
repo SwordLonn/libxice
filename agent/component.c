@@ -93,11 +93,6 @@ component_free (Component *cmp)
     xice_socket_free (udpsocket);
   }
 
-  //for (i = cmp->gsources; i; i = i->next) {
-  //  GSource *source = i->data;
-  //  g_source_destroy (source);
-  //  g_source_unref (source);
-  //}
   for (i = cmp->gctxs; i; i = i->next) {
 	  IOCtx* ctx = i->data;
 	  io_ctx_free(ctx);
@@ -125,13 +120,11 @@ component_free (Component *cmp)
 
   if (cmp->selected_pair.keepalive.tick_source != NULL) {
     xice_timer_destroy (cmp->selected_pair.keepalive.tick_source);
-    //xice_timer_unref (cmp->selected_pair.keepalive.tick_source);
     cmp->selected_pair.keepalive.tick_source = NULL;
   }
 
   if (cmp->tcp_clock) {
     xice_timer_destroy (cmp->tcp_clock);
-    //xice_timer_unref (cmp->tcp_clock);
     cmp->tcp_clock = NULL;
   }
   if (cmp->tcp) {
@@ -244,7 +237,6 @@ void component_update_selected_pair (Component *component, const CandidatePair *
 
   if (component->selected_pair.keepalive.tick_source != NULL) {
     xice_timer_destroy (component->selected_pair.keepalive.tick_source);
-    //xice_timer_unref (component->selected_pair.keepalive.tick_source);
     component->selected_pair.keepalive.tick_source = NULL;
   }
 
@@ -327,7 +319,6 @@ component_set_selected_remote_candidate (XiceAgent *agent, Component *component,
 
   if (component->selected_pair.keepalive.tick_source != NULL) {
     xice_timer_destroy (component->selected_pair.keepalive.tick_source);
-    //xice_timer_unref (component->selected_pair.keepalive.tick_source);
     component->selected_pair.keepalive.tick_source = NULL;
   }
 

@@ -211,7 +211,6 @@ size_t stun_usage_turn_create_refresh (StunAgent *agent, StunMessage *msg,
       return 0;
   }
 
-
   return stun_agent_finish_message (agent, msg, password, password_len);
 }
 

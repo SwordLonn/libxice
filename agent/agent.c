@@ -894,7 +894,6 @@ static void priv_destroy_component_tcp (Component *component)
 {
     if (component->tcp_clock) {
       xice_timer_destroy (component->tcp_clock);
-      //xice_timer_unref (component->tcp_clock);
       component->tcp_clock = NULL;
     }
     if (component->tcp) {
@@ -1064,15 +1063,8 @@ notify_pseudo_tcp_socket_clock (XiceTimer* timer, gpointer user_data)
 
   agent_lock();
 
-  if (g_source_is_destroyed (g_main_current_source ())) {
-    xice_debug ("Source was destroyed. "
-        "Avoided race condition in notify_pseudo_tcp_socket_clock");
-    agent_unlock ();
-    return FALSE;
-  }
   if (component->tcp_clock) {
     xice_timer_destroy (component->tcp_clock);
-    //xice_timer_unref (component->tcp_clock);
     component->tcp_clock = NULL;
   }
 
@@ -1092,7 +1084,6 @@ adjust_tcp_clock (XiceAgent *agent, Stream *stream, Component *component)
     if (pseudo_tcp_socket_get_next_clock (component->tcp, &timeout)) {
       if (component->tcp_clock) {
         xice_timer_destroy (component->tcp_clock);
-        //xice_timer_unref (component->tcp_clock);
         component->tcp_clock = NULL;
       }
       component->tcp_clock = agent_timeout_add_with_context (agent,
@@ -1697,7 +1688,6 @@ static void priv_remove_keepalive_timer (XiceAgent *agent)
 {
   if (agent->keepalive_timer_source != NULL) {
     xice_timer_destroy (agent->keepalive_timer_source);
-    //xice_timer_unref (agent->keepalive_timer_source);
     agent->keepalive_timer_source = NULL;
   }
 }
@@ -2006,43 +1996,30 @@ xice_agent_set_remote_candidates (XiceAgent *agent, guint stream_id, guint compo
 
 
 static gint
-_xice_agent_recv (
-  XiceAgent *agent,
-  Stream *stream,
-  Component *component,
-  XiceSocket *socket,
-  guint buf_len,
-  gchar *buf)
+_xice_agent_received(
+	XiceAgent *agent,
+	Stream *stream,
+	Component *component,
+	XiceSocket *socket,
+	gchar *buf,
+	guint len,
+	XiceAddress* from
+  )
 {
-  XiceAddress from;
-  gint len;
   GList *item;
-
-  len = xice_socket_recv (socket, &from,  buf_len, buf);
-
-  if (len <= 0)
-    return len;
 
 #ifndef NDEBUG
   if (len > 0) {
     gchar tmpbuf[INET6_ADDRSTRLEN];
-    xice_address_to_string (&from, tmpbuf);
+    xice_address_to_string (from, tmpbuf);
     xice_debug ("Agent %p : Packet received on local socket %u from [%s]:%u (%u octets).", agent,
-        xice_socket_get_fd (socket), tmpbuf, xice_address_get_port (&from), len);
+        xice_socket_get_fd (socket), tmpbuf, xice_address_get_port (from), len);
   }
 #endif
 
-
-  if ((guint)len > buf_len)
-    {
-      /* buffer is not big enough to accept this packet */
-      /* XXX: test this case */
-      return 0;
-    }
-
   for (item = component->turn_servers; item; item = g_list_next (item)) {
     TurnServer *turn = item->data;
-    if (xice_address_equal (&from, &turn->server)) {
+    if (xice_address_equal (from, &turn->server)) {
       GSList * i = NULL;
 #ifndef NDEBUG
       xice_debug ("Agent %p : Packet received from TURN server candidate.",
@@ -2054,7 +2031,7 @@ _xice_agent_recv (
             cand->stream_id == stream->id &&
             cand->component_id == component->id) {
           len = xice_turn_socket_parse_recv (cand->sockptr, &socket,
-              &from, len, buf, &from, buf, len);
+              from, len, buf, from, buf, len);
         }
       }
       break;
@@ -2071,7 +2048,7 @@ _xice_agent_recv (
 
 
   if (conn_check_handle_inbound_stun (agent, stream, component, socket,
-          &from, buf, len))
+          from, buf, len))
     /* handled STUN message*/
     return 0;
 
@@ -2321,24 +2298,21 @@ static gboolean
 xice_agent_g_source_cb (
   XiceSocket *socket,
   XiceSocketCondition condition,
-  gpointer data)
+  gpointer data,
+  gchar *buf,
+  guint len,
+  XiceAddress *from
+  )
 {
   IOCtx *ctx = data;
   XiceAgent *agent = ctx->agent;
   Stream *stream = ctx->stream;
   Component *component = ctx->component;
-  gchar buf[MAX_BUFFER_SIZE];
-  gint len;
 
   agent_lock();
 
-  if (g_source_is_destroyed (g_main_current_source ())) {
-    agent_unlock ();
-    return FALSE;
-  }
-
-  len = _xice_agent_recv (agent, stream, component, ctx->socket,
-			  MAX_BUFFER_SIZE, buf);
+  len = _xice_agent_received (agent, stream, component, ctx->socket,
+			  buf, len, from);
 
   if (len > 0 && component->tcp) {
     g_object_add_weak_pointer (G_OBJECT (agent), (gpointer *)&agent);
@@ -2365,9 +2339,7 @@ xice_agent_g_source_cb (
 
     xice_debug ("Agent %p: _xice_agent_recv returned %d, errno (%d) : %s",
         agent, len, errno, g_strerror (errno));
-    //component->gsources = g_slist_remove (component->gsources, source);
-    //g_source_destroy (source);
-    //g_source_unref (source);
+
 	component->gctxs = g_slist_remove(component->gctxs, ctx);
 
 	io_ctx_free(ctx);
@@ -2433,13 +2405,6 @@ priv_attach_stream_component (XiceAgent *agent,
 static void priv_detach_stream_component (Stream *stream, Component *component)
 {
   GSList *i;
-
-  //for (i = component->gsources; i; i = i->next) {
-  //  GSource *source = i->data;
-  //  xice_debug ("Detach source %p (stream %u).", source, stream->id);
-  //  g_source_destroy (source);
-  //  g_source_unref (source);
-  //}
 
   for (i = component->gctxs; i; i = i->next) {
 	  IOCtx *ctx = i->data;

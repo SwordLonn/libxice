@@ -42,12 +42,6 @@
 
 #include "xicesocket.h"
 
-gint
-xice_socket_recv (XiceSocket *sock, XiceAddress *from, guint len, gchar *buf)
-{
-  return sock->recv (sock, from, len, buf);
-}
-
 gboolean
 xice_socket_send (XiceSocket *sock, const XiceAddress *to,
     guint len, const gchar *buf)

@@ -82,10 +82,16 @@ struct to_be_sent {
   XiceAddress to;
 };
 
+static gboolean read_callback(
+	XiceSocket *socket,
+	XiceSocketCondition condition,
+	gpointer data,
+	gchar *buf,
+	guint len,
+	XiceAddress *from);
 
 static void socket_close (XiceSocket *sock);
-static gint socket_recv (XiceSocket *sock, XiceAddress *from,
-    guint len, gchar *buf);
+
 static gboolean socket_send (XiceSocket *sock, const XiceAddress *to,
     guint len, const gchar *buf);
 static gboolean socket_is_reliable (XiceSocket *sock);
@@ -114,11 +120,11 @@ xice_http_socket_new (XiceSocket *base_socket,
     priv->recv_len = 0;
     priv->content_length = 0;
 
+	xice_socket_set_callback(base_socket, read_callback, sock);
 
     sock->fileno = priv->base_socket->fileno;
     sock->addr = priv->base_socket->addr;
     sock->send = socket_send;
-    sock->recv = socket_recv;
     sock->is_reliable = socket_is_reliable;
     sock->close = socket_close;
 	sock->get_fd = priv->base_socket->get_fd;
@@ -183,180 +189,192 @@ socket_close (XiceSocket *sock)
   g_slice_free(HttpPriv, sock->priv);
 }
 
+static gboolean read_callback(
+	XiceSocket *base_sock,
+	XiceSocketCondition condition,
+	gpointer data,
+	gchar *buf,
+	guint len,
+	XiceAddress *from) {
+	XiceSocket* sock = (XiceSocket*)data;
+	HttpPriv *priv = sock->priv;
+	if (condition != XICE_SOCKET_READABLE || len <= 0) {
+		goto error;
+	}
 
-static gint
-socket_recv (XiceSocket *sock, XiceAddress *from, guint len, gchar *buf)
-{
-  HttpPriv *priv = sock->priv;
-  gint read = -1;
+	if (priv->state == HTTP_STATE_CONNECTED) {
+		if (priv->base_socket && sock->callback) {
+			return sock->callback(sock, XICE_SOCKET_READABLE, sock->data, buf, len, from);
+		}
+		else {
+			return FALSE;
+		}
+	}
+	priv->recv_buf = g_realloc(priv->recv_buf, priv->recv_len + len);
+	memcpy(priv->recv_buf + priv->recv_len, buf, len);
+	priv->recv_len += len;
+retry:
+	xice_debug("Receiving from HTTP proxy (state %d) : %d \n'%s'", priv->state, priv->recv_len, priv->recv_buf);
+	switch (priv->state) {
+	case HTTP_STATE_INIT:
+	{
+		gint pos = 0;
 
-  if (from)
-    *from = priv->addr;
+		/* Remove any leading spaces (could happen!) */
+		while (pos < priv->recv_len && priv->recv_buf[pos] == ' ')
+			pos++;
 
-  if (priv->base_socket)
-    read = xice_socket_recv (priv->base_socket, NULL, len, buf);
+		/* Make sure we have enough data */
+		if (pos >= priv->recv_len)
+			goto not_enough_data;
 
-  if (read <= 0 || priv->state == HTTP_STATE_CONNECTED) {
-    return read;
-  } else {
-    priv->recv_buf = g_realloc (priv->recv_buf, priv->recv_len + read);
-    memcpy (priv->recv_buf + priv->recv_len, buf, read);
-    priv->recv_len += read;
-  }
+		if (pos + 7 > priv->recv_len)
+			goto not_enough_data;
+		if (strncmp(priv->recv_buf + pos, "HTTP/1.", 7) != 0)
+			goto error;
+		pos += 7;
 
- retry:
-  xice_debug ("Receiving from HTTP proxy (state %d) : %d \n'%s'", priv->state, priv->recv_len, priv->recv_buf);
-  switch (priv->state) {
-    case HTTP_STATE_INIT:
-      {
-        gint pos = 0;
+		if (pos >= priv->recv_len)
+			goto not_enough_data;
+		if (priv->recv_buf[pos] != '0' && priv->recv_buf[pos] != '1')
+			goto error;
+		pos++;
 
-        /* Remove any leading spaces (could happen!) */
-        while (pos < priv->recv_len && priv->recv_buf[pos] == ' ')
-          pos++;
+		/* Make sure we have a space after the HTTP version */
+		if (pos >= priv->recv_len)
+			goto not_enough_data;
+		if (priv->recv_buf[pos] != ' ')
+			goto error;
 
-        /* Make sure we have enough data */
-        if (pos >= priv->recv_len)
-          goto not_enough_data;
+		/* Skip all spaces (could be more than one!) */
+		while (pos < priv->recv_len && priv->recv_buf[pos] == ' ')
+			pos++;
+		if (pos >= priv->recv_len)
+			goto not_enough_data;
 
-        if (pos + 7 > priv->recv_len)
-          goto not_enough_data;
-        if (strncmp (priv->recv_buf + pos, "HTTP/1.", 7) != 0)
-          goto error;
-        pos += 7;
+		/* Check for a successfull 2xx code */
+		if (pos + 3 > priv->recv_len)
+			goto not_enough_data;
+		if (priv->recv_buf[pos] != '2' ||
+			priv->recv_buf[pos + 1] < '0' || priv->recv_buf[pos + 1] > '9' ||
+			priv->recv_buf[pos + 2] < '0' || priv->recv_buf[pos + 2] > '9')
+			goto error;
 
-        if (pos >= priv->recv_len)
-          goto not_enough_data;
-        if(priv->recv_buf[pos] != '0' && priv->recv_buf[pos] != '1')
-          goto error;
-        pos++;
+		/* Clear any trailing chars */
+		while (pos + 1 < priv->recv_len &&
+			priv->recv_buf[pos] != '\r' && priv->recv_buf[pos + 1] != '\n')
+			pos++;
+		if (pos + 1 >= priv->recv_len)
+			goto not_enough_data;
+		pos += 2;
 
-        /* Make sure we have a space after the HTTP version */
-        if (pos >= priv->recv_len)
-          goto not_enough_data;
-        if (priv->recv_buf[pos] != ' ')
-          goto error;
+		/* consume the data we just parsed */
+		priv->recv_len -= pos;
+		memmove(priv->recv_buf, priv->recv_buf + pos, priv->recv_len);
+		priv->recv_buf = g_realloc(priv->recv_buf, priv->recv_len);
 
-        /* Skip all spaces (could be more than one!) */
-        while (pos < priv->recv_len && priv->recv_buf[pos] == ' ')
-          pos++;
-        if (pos >= priv->recv_len)
-          goto not_enough_data;
+		priv->content_length = 0;
+		priv->state = HTTP_STATE_HEADERS;
+		goto retry;
+	}
+	break;
+	case HTTP_STATE_HEADERS:
+	{
+		gint pos = 0;
 
-        /* Check for a successfull 2xx code */
-        if (pos + 3 > priv->recv_len)
-          goto not_enough_data;
-        if (priv->recv_buf[pos] != '2' ||
-            priv->recv_buf[pos+1] < '0' || priv->recv_buf[pos+1] > '9' ||
-            priv->recv_buf[pos+2] < '0' || priv->recv_buf[pos+2] > '9')
-          goto error;
+		if (pos + 15 < priv->recv_len &&
+			g_ascii_strncasecmp(priv->recv_buf, "Content-Length:", 15) == 0) {
+			priv->content_length = atoi(priv->recv_buf + 15);
+		}
+		while (pos + 1 < priv->recv_len &&
+			priv->recv_buf[pos] != '\r' && priv->recv_buf[pos + 1] != '\n')
+			pos++;
+		xice_debug("pos = %d, len = %d", pos, priv->recv_len);
+		if (pos + 1 >= priv->recv_len)
+			goto not_enough_data;
+		pos += 2;
 
-        /* Clear any trailing chars */
-        while (pos + 1 < priv->recv_len &&
-            priv->recv_buf[pos] != '\r' && priv->recv_buf[pos+1] != '\n')
-          pos++;
-        if (pos + 1 >= priv->recv_len)
-          goto not_enough_data;
-        pos += 2;
+		/* consume the data we just parsed */
+		priv->recv_len -= pos;
+		memmove(priv->recv_buf, priv->recv_buf + pos, priv->recv_len);
+		priv->recv_buf = g_realloc(priv->recv_buf, priv->recv_len);
 
-        /* consume the data we just parsed */
-        priv->recv_len -= pos;
-        memmove (priv->recv_buf, priv->recv_buf + pos, priv->recv_len);
-        priv->recv_buf = g_realloc (priv->recv_buf, priv->recv_len);
+		if (pos == 2)
+			priv->state = HTTP_STATE_BODY;
+		goto retry;
+	}
+	break;
+	case HTTP_STATE_BODY:
+	{
+		gint consumed = priv->content_length;
+		if (priv->content_length == 0) {
+			priv->state = HTTP_STATE_CONNECTED;
+			goto retry;
+		}
+		if (priv->recv_len == 0)
+			goto not_enough_data;
 
-        priv->content_length = 0;
-        priv->state = HTTP_STATE_HEADERS;
-        goto retry;
-      }
-      break;
-    case HTTP_STATE_HEADERS:
-      {
-        gint pos = 0;
+		if (priv->content_length > priv->recv_len)
+			consumed = priv->recv_len;
 
-        if (pos + 15 < priv->recv_len &&
-            g_ascii_strncasecmp (priv->recv_buf, "Content-Length:", 15) == 0) {
-          priv->content_length = atoi(priv->recv_buf + 15);
-        }
-        while (pos + 1 < priv->recv_len &&
-            priv->recv_buf[pos] != '\r' && priv->recv_buf[pos+1] != '\n')
-          pos++;
-        xice_debug ("pos = %d, len = %d", pos, priv->recv_len);
-        if (pos + 1 >= priv->recv_len)
-          goto not_enough_data;
-        pos += 2;
+		priv->recv_len -= consumed;
+		priv->content_length -= consumed;
+		memmove(priv->recv_buf, priv->recv_buf + consumed, priv->recv_len);
+		priv->recv_buf = g_realloc(priv->recv_buf, priv->recv_len);
+		goto retry;
+	}
+	break;
+	case HTTP_STATE_CONNECTED:
+	{
+		guint read = priv->recv_len;
+		struct to_be_sent *tbs = NULL;
+		gboolean ret = FALSE;
+		//if (read > len)
+		//	read = len;
 
-        /* consume the data we just parsed */
-        priv->recv_len -= pos;
-        memmove (priv->recv_buf, priv->recv_buf + pos, priv->recv_len);
-        priv->recv_buf = g_realloc (priv->recv_buf, priv->recv_len);
+		//memcpy(buf, priv->recv_buf, read);
+		if (sock->callback && read > 0) {
+			ret = sock->callback(sock, XICE_SOCKET_READABLE, sock->data, priv->recv_buf, read, from);
+		}
 
-        if (pos == 2)
-          priv->state = HTTP_STATE_BODY;
-        goto retry;
-      }
-      break;
-    case HTTP_STATE_BODY:
-      {
-        gint consumed = priv->content_length;
-        if (priv->content_length == 0) {
-          priv->state = HTTP_STATE_CONNECTED;
-          goto retry;
-        }
-        if (priv->recv_len == 0)
-          goto not_enough_data;
+		/* consume the data we returned */
+		priv->recv_len -= read;
+		memmove(priv->recv_buf, priv->recv_buf + read, priv->recv_len);
+		priv->recv_buf = g_realloc(priv->recv_buf, priv->recv_len);
 
-        if (priv->content_length > priv->recv_len)
-          consumed = priv->recv_len;
+		/* Send the pending data */
+		while ((tbs = g_queue_pop_head(&priv->send_queue))) {
+			xice_socket_send(priv->base_socket, &tbs->to,
+				tbs->length, tbs->buf);
+			g_free(tbs->buf);
+			g_slice_free(struct to_be_sent, tbs);
+		}
 
-        priv->recv_len -= consumed;
-        priv->content_length -= consumed;
-        memmove (priv->recv_buf, priv->recv_buf + consumed, priv->recv_len);
-        priv->recv_buf = g_realloc (priv->recv_buf, priv->recv_len);
-        goto retry;
-      }
-      break;
-    case HTTP_STATE_CONNECTED:
-      {
-        guint read = priv->recv_len;
-        struct to_be_sent *tbs = NULL;
+		return ret;
+	}
+	break;
+	default:
+		/* Unknown status */
+		goto error;
+	}
 
-        if (read > len)
-          read = len;
+not_enough_data:
+	return TRUE;
 
-        memcpy (buf, priv->recv_buf, read);
+error:
+	xice_debug("http error");
+	if (sock->callback) {
+		if (condition == XICE_SOCKET_READABLE)
+			condition = XICE_SOCKET_ERROR;
+		sock->callback(sock, condition, sock->data, NULL, 0, NULL);
+	}
+	if (priv->base_socket) {
+		xice_socket_free(priv->base_socket);
+	}
+	priv->base_socket = NULL;
+	priv->state = HTTP_STATE_ERROR;
 
-        /* consume the data we returned */
-        priv->recv_len -= read;
-        memmove (priv->recv_buf, priv->recv_buf + read, priv->recv_len);
-        priv->recv_buf = g_realloc (priv->recv_buf, priv->recv_len);
-
-        /* Send the pending data */
-        while ((tbs = g_queue_pop_head (&priv->send_queue))) {
-          xice_socket_send (priv->base_socket, &tbs->to,
-              tbs->length, tbs->buf);
-          g_free (tbs->buf);
-          g_slice_free (struct to_be_sent, tbs);
-        }
-
-        return read;
-      }
-      break;
-    default:
-      /* Unknown status */
-      goto error;
-  }
-
- not_enough_data:
-  return 0;
-
- error:
-  xice_debug ("http error");
-  if (priv->base_socket)
-    xice_socket_free (priv->base_socket);
-  priv->base_socket = NULL;
-  priv->state = HTTP_STATE_ERROR;
-
-  return -1;
+	return FALSE;
 }
 
 static gboolean

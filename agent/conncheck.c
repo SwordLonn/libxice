@@ -439,7 +439,6 @@ static gboolean priv_conn_check_tick_unlocked(gpointer pointer)
 		   point */
 		if (agent->conncheck_timer_source != NULL) {
 			xice_timer_destroy(agent->conncheck_timer_source);
-			//xice_timer_unref(agent->conncheck_timer_source);
 			agent->conncheck_timer_source = NULL;
 		}
 
@@ -455,12 +454,7 @@ static gboolean priv_conn_check_tick(XiceTimer* timer, gpointer pointer)
 	gboolean ret;
 
 	agent_lock();
-	if (g_source_is_destroyed(g_main_current_source())) {
-		xice_debug("Source was destroyed. "
-			"Avoided race condition in priv_conn_check_tick");
-		agent_unlock();
-		return FALSE;
-	}
+
 	ret = priv_conn_check_tick_unlocked(pointer);
 	agent_unlock();
 
@@ -473,19 +467,7 @@ static gboolean priv_conn_keepalive_retransmissions_tick(XiceTimer* timer, gpoin
 
 	agent_lock();
 
-	/* A race condition might happen where the mutex above waits for the lock
-	 * and in the meantime another thread destroys the source.
-	 * In that case, we don't need to run our retransmission tick since it should
-	 * have been cancelled */
-	if (g_source_is_destroyed(g_main_current_source())) {
-		xice_debug("Source was destroyed. "
-			"Avoided race condition in priv_conn_keepalive_retransmissions_tick");
-		agent_unlock();
-		return FALSE;
-	}
-
 	xice_timer_destroy(pair->keepalive.tick_source);
-	//xice_timer_unref(pair->keepalive.tick_source);
 	pair->keepalive.tick_source = NULL;
 
 	switch (stun_timer_refresh(&pair->keepalive.timer)) {
@@ -613,7 +595,6 @@ static gboolean priv_conn_keepalive_tick_unlocked(XiceAgent *agent)
 
 							if (p->keepalive.tick_source != NULL) {
 								xice_timer_destroy(p->keepalive.tick_source);
-								//xice_timer_unref(p->keepalive.tick_source);
 								p->keepalive.tick_source = NULL;
 							}
 
@@ -706,18 +687,11 @@ static gboolean priv_conn_keepalive_tick(XiceTimer *timer, gpointer pointer)
 	gboolean ret;
 
 	agent_lock();
-	if (g_source_is_destroyed(g_main_current_source())) {
-		xice_debug("Source was destroyed. "
-			"Avoided race condition in priv_conn_keepalive_tick");
-		agent_unlock();
-		return FALSE;
-	}
 
 	ret = priv_conn_keepalive_tick_unlocked(agent);
 	if (ret == FALSE) {
 		if (agent->keepalive_timer_source) {
 			xice_timer_destroy(agent->keepalive_timer_source);
-			//xice_timer_unref(agent->keepalive_timer_source);
 			agent->keepalive_timer_source = NULL;
 		}
 	}
@@ -732,20 +706,7 @@ static gboolean priv_turn_allocate_refresh_retransmissions_tick(XiceTimer* timer
 
 	agent_lock();
 
-	/* A race condition might happen where the mutex above waits for the lock
-	 * and in the meantime another thread destroys the source.
-	 * In that case, we don't need to run our retransmission tick since it should
-	 * have been cancelled */
-	if (g_source_is_destroyed(g_main_current_source())) {
-		xice_debug("Source was destroyed. "
-			"Avoided race condition in priv_turn_allocate_refresh_retransmissions_tick");
-		agent_unlock();
-		return FALSE;
-	}
-
-
 	xice_timer_destroy(cand->tick_source);
-	//xice_timer_unref(cand->tick_source);
 	cand->tick_source = NULL;
 
 	switch (stun_timer_refresh(&cand->timer)) {
@@ -821,7 +782,6 @@ static void priv_turn_allocate_refresh_tick_unlocked(CandidateRefresh *cand)
 
 	if (cand->tick_source != NULL) {
 		xice_timer_destroy(cand->tick_source);
-		//xice_timer_unref(cand->tick_source);
 		cand->tick_source = NULL;
 	}
 
@@ -853,12 +813,6 @@ static gboolean priv_turn_allocate_refresh_tick(XiceTimer* timer, gpointer point
 	CandidateRefresh *cand = (CandidateRefresh *)pointer;
 
 	agent_lock();
-	if (g_source_is_destroyed(g_main_current_source())) {
-		xice_debug("Source was destroyed. "
-			"Avoided race condition in priv_turn_allocate_refresh_tick");
-		agent_unlock();
-		return FALSE;
-	}
 
 	priv_turn_allocate_refresh_tick_unlocked(cand);
 	agent_unlock();
@@ -1123,7 +1077,6 @@ static gboolean priv_update_selected_pair(XiceAgent *agent, Component *component
 
 		if (component->selected_pair.keepalive.tick_source != NULL) {
 			xice_timer_destroy(component->selected_pair.keepalive.tick_source);
-			//xice_timer_unref(component->selected_pair.keepalive.tick_source);
 			component->selected_pair.keepalive.tick_source = NULL;
 		}
 
@@ -1420,7 +1373,6 @@ void conn_check_free(XiceAgent *agent)
 
 	if (agent->conncheck_timer_source != NULL) {
 		xice_timer_destroy(agent->conncheck_timer_source);
-		//xice_timer_unref(agent->conncheck_timer_source);
 		agent->conncheck_timer_source = NULL;
 	}
 }
@@ -2534,7 +2486,6 @@ static gboolean priv_map_reply_to_relay_refresh(XiceAgent *agent, StunMessage *r
 							priv_turn_allocate_refresh_tick, cand);
 
 					xice_timer_destroy(cand->tick_source);
-					//xice_timer_unref(cand->tick_source);
 					cand->tick_source = NULL;
 				}
 				else if (res == STUN_USAGE_TURN_RETURN_ERROR) {
@@ -2602,7 +2553,6 @@ static gboolean priv_map_reply_to_keepalive_conncheck(XiceAgent *agent,
 				agent);
 			if (component->selected_pair.keepalive.tick_source) {
 				xice_timer_destroy(component->selected_pair.keepalive.tick_source);
-				//xice_timer_unref(component->selected_pair.keepalive.tick_source);
 				component->selected_pair.keepalive.tick_source = NULL;
 			}
 			component->selected_pair.keepalive.stun_message.buffer = NULL;

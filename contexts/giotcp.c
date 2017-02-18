@@ -92,18 +92,29 @@ socket_callback(
 	GIOCondition condition,
 	gpointer data)
 {
+#define MAX_BUFFER_SIZE 65536
 	XiceSocket* sock = (XiceSocket*)data;
 	GSource* source = g_main_current_source();
+	gchar buf[MAX_BUFFER_SIZE];
+	gint len;
+	XiceAddress addr;
 	if (g_source_is_destroyed(source)) {
 		xice_debug("Source was destroyed. ");
-		return FALSE;
+		return sock->callback(sock, XICE_SOCKET_ERROR, sock->data, NULL, 0, NULL);
 	}
 
-	if (sock->callback) {
-		return sock->callback(sock, XICE_SOCKET_READABLE, sock->data);
+	len = socket_recv(sock, &addr, MAX_BUFFER_SIZE, buf);
+
+	if (len < 0) {
+		xice_debug("socket recv error.");
+		return sock->callback(sock, XICE_SOCKET_ERROR, sock->data, buf, len, &addr);
+	}
+	else if (len == 0) {
+		xice_debug("socket recv nothing.");
+		return TRUE;
 	}
 
-	return TRUE;
+	return sock->callback(sock, XICE_SOCKET_READABLE, sock->data, buf, len, &addr);
 }
 
 static void
@@ -204,7 +215,6 @@ gio_tcp_socket_create(GMainContext *ctx, XiceAddress *addr)
 
   sock->fileno = (gpointer)gsock;
   sock->send = socket_send;
-  sock->recv = socket_recv;
   sock->is_reliable = socket_is_reliable;
   sock->close = socket_close;
   sock->get_fd = socket_get_fd;
