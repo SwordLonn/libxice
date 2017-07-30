@@ -201,7 +201,7 @@ next:
 			  padlen = 0;
 		  }			  
 	  }
-	  copy = min(len, padlen + priv->expecting_len - priv->recv_buf_len);
+	  copy = MIN(len, padlen + priv->expecting_len - priv->recv_buf_len);
 	  memcpy(priv->recv_buf + priv->recv_buf_len, buf, copy);
 	  buf += copy;
 	  len -= copy;

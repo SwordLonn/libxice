@@ -1059,7 +1059,7 @@ xice_turn_socket_parse_recv (XiceSocket *sock, XiceSocket **from_sock,
         //memmove (buf, data, len > data_len ? data_len : len);
         //return len > data_len ? data_len : len;
 		if (sock->callback) {
-			sock->callback(sock, XICE_SOCKET_READABLE, sock->data, data, min(len, data_len), from);
+			sock->callback(sock, XICE_SOCKET_READABLE, sock->data, data, MIN(len, data_len), from);
 		}
 		return 0;
       } else {
@@ -1095,7 +1095,7 @@ xice_turn_socket_parse_recv (XiceSocket *sock, XiceSocket **from_sock,
   //memmove (buf, recv_buf, len > recv_len ? recv_len : len);
   //return len > recv_len ? recv_len : len;
   if (sock->callback) {
-	  sock->callback(sock, XICE_SOCKET_READABLE, sock->data, recv_buf, min(len, recv_len), from);
+	  sock->callback(sock, XICE_SOCKET_READABLE, sock->data, recv_buf, MIN(len, recv_len), from);
   }
   return 0;
  msn_google_lock:
