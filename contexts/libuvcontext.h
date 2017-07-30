@@ -5,7 +5,7 @@
 
 #include "xicecontext.h"
 
-XiceContext *libuv_context_create(const char* type, gpointer ctx);
+XiceContext *libuv_context_create(gpointer ctx);
 
 #endif
 #endif 

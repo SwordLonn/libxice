@@ -20,7 +20,7 @@ static XiceTimer* create_timer(XiceContext* ctx, guint interval,
 
 static void destroy(XiceContext* ctx);
 
-XiceContext *libuv_context_create(const char* type, gpointer ctx) 
+XiceContext *libuv_context_create(gpointer ctx) 
 {
 	XiceContext* xice = g_slice_new0(XiceContext);
 	XiceContextLibuv* uv = g_slice_new0(XiceContextLibuv);

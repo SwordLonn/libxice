@@ -59,10 +59,16 @@ XiceSocket* libuv_udp_socket_create(uv_loop_t* loop, XiceAddress* addr) {
 	if (name.ss_family == AF_INET6) {
 		flags |= UV_UDP_IPV6ONLY;
 	}
-	xice_address_set_from_sockaddr(&sock->addr, (struct sockaddr *)&name);
-	xice_address_init(&uv->xiceaddr);
-
 	uv_udp_bind(uv->handle, (struct sockaddr *)&name, flags);
+
+	// if bind an address with port 0, system will generate a ephemeral port number
+	// we should get the address 
+	struct sockaddr_storage new_name;
+	int namelen = sizeof new_name;
+	uv_udp_getsockname(uv->handle, &new_name, &namelen);
+
+	xice_address_set_from_sockaddr(&sock->addr, (struct sockaddr *)&new_name);
+	xice_address_init(&uv->xiceaddr);
 
 	uv_udp_recv_start(uv->handle, (uv_alloc_cb)on_alloc_callback, (uv_udp_recv_cb)on_recv_callback);
 
@@ -172,8 +178,8 @@ static void on_recv_callback(uv_udp_t* handle, ssize_t nread, const uv_buf_t* bu
 	}
 
 	xice_address_set_from_sockaddr(&xaddr, addr);
-	sock->callback(sock, XICE_SOCKET_READABLE, sock->data, buf->base, buf->len, &xaddr);
-
+	// sock->callback(sock, XICE_SOCKET_READABLE, sock->data, buf->base, buf->len, &xaddr);
+	sock->callback(sock, XICE_SOCKET_READABLE, sock->data, buf->base, nread, &xaddr);
 }
 
 static void on_send_callback(uv_udp_send_t* req, int status) {
