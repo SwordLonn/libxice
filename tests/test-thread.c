@@ -182,9 +182,7 @@ int main (void)
   XiceAgent *lagent, *ragent;      /* agent's L and R */
   XiceAddress baseaddr;
   const char *stun_server = NULL, *stun_server_port = NULL;
-  GMainContext *lmainctx, *rmainctx;
-  GMainLoop *lmainloop, *rmainloop;
-  GThread *lthread, *rthread;
+
   guint ls_id, rs_id;
   GMainContext *ldmainctx, *rdmainctx;
   GMainLoop *ldmainloop, *rdmainloop;
@@ -199,10 +197,7 @@ int main (void)
   g_thread_init(NULL);
 #endif
 
-  lmainctx = g_main_context_new ();
-  rmainctx = g_main_context_new ();
-  lmainloop = g_main_loop_new (lmainctx, FALSE);
-  rmainloop = g_main_loop_new (rmainctx, FALSE);
+
 
   ldmainctx = g_main_context_new ();
   rdmainctx = g_main_context_new ();
@@ -279,15 +274,12 @@ int main (void)
   g_debug ("test-thread: TEST STARTS / running test for the 1st time");
 
 #if !GLIB_CHECK_VERSION(2,31,8)
-  lthread = g_thread_create (mainloop_thread, lmainloop, TRUE, NULL);
-  rthread = g_thread_create (mainloop_thread, rmainloop, TRUE, NULL);
+
 #else
   lthread = g_thread_new ("lthread libxice", mainloop_thread, lmainloop);
   rthread = g_thread_new ("rthread libxice", mainloop_thread, rmainloop);
 #endif
 
-  g_assert (lthread);
-  g_assert (rthread);
 
   ls_id = xice_agent_add_stream (lagent, 2);
   rs_id = xice_agent_add_stream (ragent, 2);
@@ -324,17 +316,9 @@ int main (void)
   while (!g_main_loop_is_running (rdmainloop));
   while (g_main_loop_is_running (rdmainloop))
     g_main_loop_quit (rdmainloop);
-  while (!g_main_loop_is_running (lmainloop));
-  while (g_main_loop_is_running (lmainloop))
-    g_main_loop_quit (lmainloop);
-  while (!g_main_loop_is_running (rmainloop));
-  while (g_main_loop_is_running (rmainloop))
-    g_main_loop_quit (rmainloop);
 
   g_thread_join (ldthread);
   g_thread_join (rdthread);
-  g_thread_join (lthread);
-  g_thread_join (rthread);
 
   /* note: verify that correct number of local candidates were reported */
   g_assert (global_lagent_cands == 1);
@@ -343,8 +327,6 @@ int main (void)
   g_object_unref (lagent);
   g_object_unref (ragent);
 
-  g_main_loop_unref (lmainloop);
-  g_main_loop_unref (rmainloop);
   g_main_loop_unref (ldmainloop);
   g_main_loop_unref (rdmainloop);
 
