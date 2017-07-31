@@ -133,11 +133,10 @@ static void connect_cb(uv_connect_t* req, int status) {
 }
 
 static void on_alloc_callback(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-	static guchar slab[65536];
-	g_assert(handle != NULL);
-	g_assert(suggested_size <= sizeof(slab));
-	buf->base = slab;
-	buf->len = sizeof(slab);
+  buf->base = malloc(65536);
+	buf->len = 65536;
+  g_assert(handle != NULL);
+  g_assert(suggested_size <= buf->len);
 }
 
 void on_recv_callback(uv_stream_t* stream,

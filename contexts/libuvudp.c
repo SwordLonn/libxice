@@ -156,11 +156,11 @@ static gboolean socket_is_reliable(XiceSocket *sock) {
 }
 
 static void on_alloc_callback(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-	static guchar slab[65536];
+  // if using static buf, tow local agents will conflict
+  buf->base = malloc(65536);
+  buf->len = 65536;
+  g_assert(suggested_size <= buf->len);
 	g_assert(handle != NULL);
-	g_assert(suggested_size <= sizeof(slab));
-	buf->base = slab;
-	buf->len = sizeof(slab);
 }
 
 static void on_recv_callback(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf,

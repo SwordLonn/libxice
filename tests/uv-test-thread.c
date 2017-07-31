@@ -48,7 +48,7 @@
 
 #include <uv.h>
 
-GMainLoop *error_loop;
+static uv_loop_t *error_loop;
 
 gint global_lagent_cands = 0;
 gint global_ragent_cands = 0;
@@ -56,14 +56,10 @@ gint global_ragent_cands = 0;
 gint global_lagent_buffers = 0;
 gint global_ragent_buffers = 0;
 
-static gboolean timer_cb (gpointer pointer)
+void timer_cb (uv_timer_t *handle)
 {
-  g_debug ("test-thread:%s: %p", G_STRFUNC, pointer);
-
-  /* note: should not be reached, abort */
   g_debug ("ERROR: test has got stuck, aborting...");
   exit (-1);
-
 }
 
 static void
@@ -154,8 +150,10 @@ static void cb_xice_recv (XiceAgent *agent, guint stream_id, guint component_id,
   if (*count == 10)
     *count = -1;
 
-  if (global_ragent_buffers == -1 && global_lagent_buffers == -1)
-    g_main_loop_quit (error_loop);
+  if (global_ragent_buffers == -1 && global_lagent_buffers == -1) {
+    uv_stop(error_loop);
+    uv_loop_close(error_loop);
+  }
 }
 
 
@@ -200,17 +198,14 @@ int main(void)
 	uv_loop_t *ldmainloop = malloc(sizeof(uv_loop_t));
 	uv_loop_init(ldmainloop);
 	XiceContext* lcontext = xice_context_create("libuv", (gpointer)ldmainloop);
-	lagent = xice_agent_new(lcontext, XICE_COMPATIBILITY_RFC5245);
+	lagent = xice_agent_new(lcontext, XICE_COMPATIBILITY_MSN);
 	uv_thread_t ldthread;
 
 	uv_loop_t *rdmainloop = malloc(sizeof(uv_loop_t));
 	uv_loop_init(rdmainloop);
 	XiceContext* rcontext = xice_context_create("libuv", (gpointer)rdmainloop);
-	ragent = xice_agent_new(rcontext, XICE_COMPATIBILITY_RFC5245);
+	ragent = xice_agent_new(rcontext, XICE_COMPATIBILITY_MSN);
 	uv_thread_t rdthread;
-
-	error_loop = g_main_loop_new(NULL, FALSE);
-
 
 	g_object_set_data(G_OBJECT(lagent), "other-agent", ragent);
 	g_object_set_data(G_OBJECT(ragent), "other-agent", lagent);
@@ -218,8 +213,7 @@ int main(void)
 	g_object_set(G_OBJECT(lagent), "controlling-mode", TRUE, NULL);
 	g_object_set(G_OBJECT(ragent), "controlling-mode", FALSE, NULL);
 
-	/* step: add a timer to catch state changes triggered by signals */
-	g_timeout_add(30000, timer_cb, NULL);
+	
 
 	/* step: specify which local interface to use */
 	if (!xice_address_set_from_string(&baseaddr, "127.0.0.1"))
@@ -289,13 +283,23 @@ int main(void)
 	uv_thread_create(&ldthread, mainloop_thread, ldmainloop);
 	uv_thread_create(&rdthread, mainloop_thread, rdmainloop);
 
-	/* Run loop for error timer */
-	g_main_loop_run(error_loop);
+  /* step: add a timer to catch state changes triggered by signals */
+  error_loop = (uv_loop_t*)malloc(sizeof(uv_loop_t));
+  uv_loop_init(error_loop);
+  uv_timer_t timer_req;
+  uv_timer_init(error_loop, &timer_req);
+  uv_timer_start(&timer_req, timer_cb, 30000, 0); // ?
 
-	// quit loop?
+  /* Run loop for error timer */
+  uv_run(error_loop, UV_RUN_DEFAULT);
 
-	uv_thread_join(ldthread);
-	uv_thread_join(rdthread);
+  uv_stop(ldmainloop);
+  uv_stop(rdmainloop);
+  uv_loop_close(ldmainloop);
+  uv_loop_close(rdmainloop);
+
+	uv_thread_join(&ldthread);
+	uv_thread_join(&rdthread);
 
 	/* note: verify that correct number of local candidates were reported */
 	g_assert(global_lagent_cands == 1);
@@ -304,7 +308,6 @@ int main(void)
 	g_object_unref(lagent);
 	g_object_unref(ragent);
 
-	g_main_loop_unref(error_loop);
 #ifdef G_OS_WIN32
 	WSACleanup();
 #endif

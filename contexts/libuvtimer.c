@@ -40,7 +40,7 @@ static void timer_callback(uv_timer_t *timer) {
 
 static void libuv_timer_start(XiceTimer* timer) {
 	XiceTimerLibuv* uv = timer->priv;
-	uv_timer_start(uv->handle, timer_callback, timer->interval, 1);
+	uv_timer_start(uv->handle, timer_callback, timer->interval, timer->interval);
 }
 
 static void libuv_timer_stop(XiceTimer* timer) {
