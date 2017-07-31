@@ -15,27 +15,17 @@ AM_CFLAGS = \
 	-I $(top_srcdir)/agent \
 	-I $(top_srcdir)/random \
 	-I $(top_srcdir)/socket \
-	-I $(top_srcdir)/stun
+	-I $(top_srcdir)/stun \
+	-luv
 
 COMMON_LDADD = $(top_builddir)/agent/libagent.la $(top_builddir)/socket/libsocket.la $(GLIB_LIBS)
 
 check_PROGRAMS = \
-	test-pseudotcp \
-	test-bsd \
-	test \
-	test-address \
-	test-add-remove-stream \
-	test-priority \
-	test-mainloop \
-	test-fullmode \
-	test-restart \
-	test-fallback \
-	test-thread \
-	test-dribble \
-        test-new-dribble
+	uv-test-mainloop \
+	uv-test-thread
+
 
 dist_check_SCRIPTS = \
-	check-test-fullmode-with-stun.sh \
 	test-pseudotcp-random.sh
 
 TESTS = $(check_PROGRAMS) $(dist_check_SCRIPTS)
@@ -66,6 +56,9 @@ test_dribble_LDADD = $(COMMON_LDADD)
 
 test_new_dribble_LDADD = $(COMMON_LDADD)
 
+uv_test_mainloop_LDADD = $(COMMON_LDADD)
+
+uv_test_thread_LDADD = $(COMMON_LDADD)
+
 all-local:
-	chmod a+x $(srcdir)/check-test-fullmode-with-stun.sh
 	chmod a+x $(srcdir)/test-pseudotcp-random.sh

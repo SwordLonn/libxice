@@ -123,5 +123,5 @@ stun_usage_turn_create
 stun_usage_turn_create_refresh
 stun_usage_turn_process
 stun_usage_turn_refresh_process
-xice_context_new
+xice_context_create
 xice_context_destroy

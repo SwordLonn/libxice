@@ -1,4 +1,5 @@
 #include <glib.h>
+#include <errno.h>
 #include "agent/debug.h"
 #include "giocontext.h"
 #include "giotimer.h"

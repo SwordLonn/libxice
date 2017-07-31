@@ -5,6 +5,9 @@
 #include "agent.h"
 #include "xicesocket.h"
 #include "giocontext.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 void xice_context_destroy(XiceContext* ctx) {
 	g_assert(ctx != NULL);
