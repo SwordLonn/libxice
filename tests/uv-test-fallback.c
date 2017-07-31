@@ -40,7 +40,7 @@
 #endif
 
 #include "agent.h"
-#include "agent-priv.h" /* for testing purposes */
+//#include "agent-priv.h" /* for testing purposes */  // conflict with uv!!!
 
 #include <stdlib.h>
 #include <string.h>
@@ -74,7 +74,7 @@ static void priv_print_global_status (void)
   g_debug ("\trstate=%d", global_ragent_state);
 }
 
-static void timer_cb (uv_handle_t pointer)
+static void timer_cb (uv_handle_t* pointer)
 {
   g_debug ("test-fallback:%s: %p", G_STRFUNC, pointer);
 
