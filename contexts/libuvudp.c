@@ -59,7 +59,11 @@ XiceSocket* libuv_udp_socket_create(uv_loop_t* loop, XiceAddress* addr) {
 	if (name.ss_family == AF_INET6) {
 		flags |= UV_UDP_IPV6ONLY;
 	}
-	uv_udp_bind(uv->handle, (struct sockaddr *)&name, flags);
+
+	int err = uv_udp_bind(uv->handle, (struct sockaddr *)&name, flags);
+	if (err < 0) {
+		return NULL;
+	}
 
 	// if bind an address with port 0, system will generate a ephemeral port number
 	// we should get the address 
