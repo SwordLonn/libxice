@@ -127,13 +127,13 @@ typedef enum {
 
 /**
  * PseudoTcpState:
- * @TCP_LISTEN: The socket's initial state. The socket isn't connected and is
+ * @XICE_TCP_LISTEN: The socket's initial state. The socket isn't connected and is
  * listening for an incoming connection
- * @TCP_SYN_SENT: The socket has sent a connection request (SYN) packet and is
+ * @XICE_TCP_SYN_SENT: The socket has sent a connection request (SYN) packet and is
  * waiting for an answer
- * @TCP_SYN_RECEIVED: The socket has received a connection request (SYN) packet.
- * @TCP_ESTABLISHED: The socket is connected
- * @TCP_CLOSED: The socket has been closed
+ * @XICE_TCP_SYN_RECEIVED: The socket has received a connection request (SYN) packet.
+ * @XICE_TCP_ESTABLISHED: The socket is connected
+ * @XICE_TCP_CLOSED: The socket has been closed
  *
  * An enum representing the state of the #PseudoTcpSocket.
  * <para> See also: #PseudoTcpSocket:state </para>
@@ -141,11 +141,11 @@ typedef enum {
  * Since: 0.0.11
  */
 typedef enum {
-  TCP_LISTEN,
-  TCP_SYN_SENT,
-  TCP_SYN_RECEIVED,
-  TCP_ESTABLISHED,
-  TCP_CLOSED
+  XICE_TCP_LISTEN,
+  XICE_TCP_SYN_SENT,
+  XICE_TCP_SYN_RECEIVED,
+  XICE_TCP_ESTABLISHED,
+  XICE_TCP_CLOSED
 } PseudoTcpState;
 
 /**
@@ -227,7 +227,7 @@ PseudoTcpSocket *pseudo_tcp_socket_new (guint32 conversation,
  * The connection will only be successful after the
  * %PseudoTcpCallbacks:PseudoTcpOpened callback is called
  *
- * Returns: %TRUE on success, %FALSE on failure (not in %TCP_LISTEN state)
+ * Returns: %TRUE on success, %FALSE on failure (not in %XICE_TCP_LISTEN state)
  * <para> See also: pseudo_tcp_socket_get_error() </para>
  *
  * Since: 0.0.11

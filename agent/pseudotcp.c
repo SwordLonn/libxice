@@ -390,7 +390,7 @@ pseudo_tcp_socket_class_init (PseudoTcpSocketClass *cls)
   g_object_class_install_property (object_class, PROP_STATE,
       g_param_spec_uint ("state", "PseudoTcp State",
           "The current state (enum PseudoTcpState) of the PseudoTcp socket",
-          TCP_LISTEN, TCP_CLOSED, TCP_LISTEN,
+          XICE_TCP_LISTEN, XICE_TCP_CLOSED, XICE_TCP_LISTEN,
           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
 }
@@ -489,7 +489,7 @@ pseudo_tcp_socket_init (PseudoTcpSocket *obj)
   priv->shutdown = SD_NONE;
   priv->error = 0;
 
-  priv->state = TCP_LISTEN;
+  priv->state = XICE_TCP_LISTEN;
   priv->conv = 0;
   priv->rcv_wnd = sizeof(priv->rbuf);
   priv->snd_nxt = priv->slen = 0;
@@ -536,13 +536,13 @@ pseudo_tcp_socket_connect(PseudoTcpSocket *self)
   PseudoTcpSocketPrivate *priv = self->priv;
   gchar buffer[1];
 
-  if (priv->state != TCP_LISTEN) {
+  if (priv->state != XICE_TCP_LISTEN) {
     priv->error = EINVAL;
     return FALSE;
   }
 
-  priv->state = TCP_SYN_SENT;
-  DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "State: TCP_SYN_SENT");
+  priv->state = XICE_TCP_SYN_SENT;
+  DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "State: XICE_TCP_SYN_SENT");
 
   buffer[0] = CTL_CONNECT;
   queue(self, buffer, 1, TRUE);
@@ -556,7 +556,7 @@ pseudo_tcp_socket_notify_mtu(PseudoTcpSocket *self, guint16 mtu)
 {
   PseudoTcpSocketPrivate *priv = self->priv;
   priv->mtu_advise = mtu;
-  if (priv->state == TCP_ESTABLISHED) {
+  if (priv->state == XICE_TCP_ESTABLISHED) {
     adjustMTU(self);
   }
 }
@@ -567,7 +567,7 @@ pseudo_tcp_socket_notify_clock(PseudoTcpSocket *self)
   PseudoTcpSocketPrivate *priv = self->priv;
   guint32 now = get_current_time ();
 
-  if (priv->state == TCP_CLOSED)
+  if (priv->state == XICE_TCP_CLOSED)
     return;
 
   // Check if it's time to retransmit a segment
@@ -596,7 +596,7 @@ pseudo_tcp_socket_notify_clock(PseudoTcpSocket *self)
       priv->cwnd = priv->mss;
 
       // Back off retransmit timer.  Note: the limit is lower when connecting.
-      rto_limit = (priv->state < TCP_ESTABLISHED) ? DEF_RTO : MAX_RTO;
+      rto_limit = (priv->state < XICE_TCP_ESTABLISHED) ? DEF_RTO : MAX_RTO;
       priv->rx_rto = min(rto_limit, priv->rx_rto * 2);
       priv->rto_base = now;
     }
@@ -646,12 +646,12 @@ pseudo_tcp_socket_get_next_clock(PseudoTcpSocket *self, long *timeout)
     return FALSE;
 
   if ((priv->shutdown == SD_GRACEFUL)
-      && ((priv->state != TCP_ESTABLISHED)
+      && ((priv->state != XICE_TCP_ESTABLISHED)
           || ((priv->slen == 0) && (priv->t_ack == 0)))) {
     return FALSE;
   }
 
-  if (priv->state == TCP_CLOSED) {
+  if (priv->state == XICE_TCP_CLOSED) {
     *timeout = CLOSED_TIMEOUT;
     return TRUE;
   }
@@ -678,7 +678,7 @@ pseudo_tcp_socket_recv(PseudoTcpSocket *self, char * buffer, size_t len)
   PseudoTcpSocketPrivate *priv = self->priv;
   guint32 read;
 
-  if (priv->state != TCP_ESTABLISHED) {
+  if (priv->state != XICE_TCP_ESTABLISHED) {
     priv->error = ENOTCONN;
     return -1;
   }
@@ -718,7 +718,7 @@ pseudo_tcp_socket_send(PseudoTcpSocket *self, const char * buffer, guint32 len)
   PseudoTcpSocketPrivate *priv = self->priv;
   gint written;
 
-  if (priv->state != TCP_ESTABLISHED) {
+  if (priv->state != XICE_TCP_ESTABLISHED) {
     priv->error = ENOTCONN;
     return -1;
   }
@@ -891,7 +891,7 @@ process(PseudoTcpSocket *self, Segment *seg)
   priv->last_traffic = priv->lastrecv = now;
   priv->bOutgoing = FALSE;
 
-  if (priv->state == TCP_CLOSED) {
+  if (priv->state == XICE_TCP_CLOSED) {
     // !?! send reset?
     DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "closed");
     return FALSE;
@@ -911,14 +911,14 @@ process(PseudoTcpSocket *self, Segment *seg)
       return FALSE;
     } else if (seg->data[0] == CTL_CONNECT) {
       bConnect = TRUE;
-      if (priv->state == TCP_LISTEN) {
+      if (priv->state == XICE_TCP_LISTEN) {
         char buffer[1];
-        priv->state = TCP_SYN_RECEIVED;
+        priv->state = XICE_TCP_SYN_RECEIVED;
         buffer[0] = CTL_CONNECT;
         queue(self, buffer, 1, TRUE);
-      } else if (priv->state == TCP_SYN_SENT) {
-        priv->state = TCP_ESTABLISHED;
-        DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "State: TCP_ESTABLISHED");
+      } else if (priv->state == XICE_TCP_SYN_SENT) {
+        priv->state = XICE_TCP_ESTABLISHED;
+        DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "State: XICE_TCP_ESTABLISHED");
         adjustMTU(self);
         if (priv->callbacks.PseudoTcpOpened)
           priv->callbacks.PseudoTcpOpened(self, priv->callbacks.user_data);
@@ -1020,9 +1020,9 @@ process(PseudoTcpSocket *self, Segment *seg)
     }
 
     // !?! A bit hacky
-    if ((priv->state == TCP_SYN_RECEIVED) && !bConnect) {
-      priv->state = TCP_ESTABLISHED;
-      DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "State: TCP_ESTABLISHED");
+    if ((priv->state == XICE_TCP_SYN_RECEIVED) && !bConnect) {
+      priv->state = XICE_TCP_ESTABLISHED;
+      DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "State: XICE_TCP_ESTABLISHED");
       adjustMTU(self);
       if (priv->callbacks.PseudoTcpOpened)
         priv->callbacks.PseudoTcpOpened(self, priv->callbacks.user_data);
@@ -1183,7 +1183,7 @@ transmit(PseudoTcpSocket *self, const GList *seg, guint32 now)
   SSegment *segment = (SSegment*)(seg->data);
   guint32 nTransmit = min(segment->len, priv->mss);
 
-  if (segment->xmit >= ((priv->state == TCP_ESTABLISHED) ? 15 : 30)) {
+  if (segment->xmit >= ((priv->state == XICE_TCP_ESTABLISHED) ? 15 : 30)) {
     DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "too many retransmits");
     return FALSE;
   }
@@ -1348,8 +1348,8 @@ closedown(PseudoTcpSocket *self, guint32 err)
   PseudoTcpSocketPrivate *priv = self->priv;
   priv->slen = 0;
 
-  DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "State: TCP_CLOSED");
-  priv->state = TCP_CLOSED;
+  DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "State: XICE_TCP_CLOSED");
+  priv->state = XICE_TCP_CLOSED;
   if (priv->callbacks.PseudoTcpClosed)
     priv->callbacks.PseudoTcpClosed(self, err, priv->callbacks.user_data);
 }
