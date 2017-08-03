@@ -16,6 +16,8 @@ AM_CFLAGS = \
 	-I $(top_srcdir)/agent \
 	-I $(top_srcdir)/
 
+AM_LDFLAGS = -luv
+
 noinst_LTLIBRARIES = libcontexts.la
 
 libcontexts_la_SOURCES = \

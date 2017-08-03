@@ -21,7 +21,7 @@ rm -f -- "$pidfile"
 (sh -c "echo \$\$ > \"$pidfile\" && exec "$STUND" ${XICE_STUN_SERVER_PORT}") &
 sleep 1
 
-./test-fullmode
+./uv-test-fullmode
 error=$?
 
 kill "$(cat "$pidfile")"

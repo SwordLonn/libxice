@@ -6,6 +6,7 @@ if test -z "$srcdir"; then
 	srcdir=.
 fi
 
+chmod +x $srcdir/../scripts/*.sh
 check_symbols=$srcdir/../scripts/check-symbols.sh
 
 if ! test -f $check_symbols; then
