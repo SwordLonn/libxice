@@ -160,10 +160,8 @@ static gboolean socket_is_reliable(XiceSocket *sock) {
 }
 
 static void on_alloc_callback(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-  // if using static buf, tow local agents will conflict
-  buf->base = malloc(65536);
-  buf->len = 65536;
-  g_assert(suggested_size <= buf->len);
+	buf->base = malloc(suggested_size);
+	buf->len = suggested_size;
 	g_assert(handle != NULL);
 }
 
@@ -175,15 +173,18 @@ static void on_recv_callback(uv_udp_t* handle, ssize_t nread, const uv_buf_t* bu
 	if (nread < 0) {
 		xice_debug("unexpect error.");
 		sock->callback(sock, XICE_SOCKET_ERROR, sock->data, NULL, 0, NULL);
+		free(buf->base);
 		return;
 	}
 	if (nread == 0) {
+		free(buf->base);
 		return;
 	}
 
 	xice_address_set_from_sockaddr(&xaddr, addr);
 	// sock->callback(sock, XICE_SOCKET_READABLE, sock->data, buf->base, buf->len, &xaddr);
 	sock->callback(sock, XICE_SOCKET_READABLE, sock->data, buf->base, nread, &xaddr);
+	free(buf->base);
 }
 
 static void on_send_callback(uv_udp_send_t* req, int status) {

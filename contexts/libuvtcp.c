@@ -133,10 +133,9 @@ static void connect_cb(uv_connect_t* req, int status) {
 }
 
 static void on_alloc_callback(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-  buf->base = malloc(65536);
-	buf->len = 65536;
-  g_assert(handle != NULL);
-  g_assert(suggested_size <= buf->len);
+	buf->base = malloc(suggested_size);
+	buf->len = suggested_size;
+	g_assert(suggested_size <= buf->len);
 }
 
 void on_recv_callback(uv_stream_t* stream,
@@ -147,13 +146,16 @@ void on_recv_callback(uv_stream_t* stream,
 	if (nread < 0) {
 		xice_debug("unexpect error.");
 		sock->callback(sock, XICE_SOCKET_ERROR, sock->data, NULL, 0, NULL);
+		free(buf->base);
 		return;
 	}
 	if (nread == 0) {
+		free(buf->base);
 		return;
 	}
 
 	sock->callback(sock, XICE_SOCKET_READABLE, sock->data, buf->base, buf->len, &tcp->xaddr);
+	free(buf->base);
 }
 
 void on_write_callback(uv_write_t* req, int status) {

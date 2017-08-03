@@ -143,7 +143,7 @@ static void priv_print_global_status (void)
   g_debug ("\tL cands=%d R cands=%d", global_lagent_cands, global_ragent_cands);
 }
 
-static void timer_cb (uv_handle_t pointer)
+static void timer_cb (uv_handle_t* pointer)
 {
   g_debug ("test-fullmode:%s: %p", G_STRFUNC, pointer);
 
